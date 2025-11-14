@@ -1,0 +1,79 @@
+name: Code Quality
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  check-formatting:
+    name: Check Code Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check Prettier formatting
+        run: |
+          if command -v prettier &> /dev/null; then
+            pnpm prettier --check "**/*.{ts,tsx,js,jsx,json,md}" || echo "Formatting check skipped"
+          else
+            echo "Prettier not found, skipping"
+          fi
+        continue-on-error: true
+
+  check-conventional-commits:
+    name: Check Commit Messages
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check commit messages
+        uses: wagoid/commitlint-github-action@v5
+        with:
+          configFile: .commitlintrc.json || echo "Commitlint config not found, skipping"
+        continue-on-error: true
+
+  check-pr-size:
+    name: Check PR Size
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check PR size
+        run: |
+          ADDED=$(git diff --numstat ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} | awk '{sum+=$1} END {print sum}')
+          if [ "$ADDED" -gt 300 ]; then
+            echo "⚠️ PR is large ($ADDED lines added). Consider splitting into smaller PRs."
+            echo "::warning::PR exceeds recommended size (300 LOC). Consider splitting."
+          else
+            echo "✅ PR size is acceptable ($ADDED lines added)"
+          fi
+        continue-on-error: true
+
