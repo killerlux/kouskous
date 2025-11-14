@@ -28,7 +28,13 @@ jobs:
           version: 8
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          if [ ! -f "pnpm-lock.yaml" ]; then
+            echo "⚠️ No pnpm-lock.yaml found, generating one..."
+            pnpm install --no-frozen-lockfile || pnpm install
+          else
+            pnpm install --frozen-lockfile
+          fi
 
       - name: Check Prettier formatting
         run: |
