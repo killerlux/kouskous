@@ -1,39 +1,38 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
-import { Ride, RideStatus } from './ride.entity';
+import { Repository, Point } from 'typeorm';
+import { Ride } from './ride.entity';
 import { CreateRideDto, CompleteRideDto } from './dto/create-ride.dto';
+import { User } from '../users/user.entity';
+import { Driver } from '../drivers/driver.entity';
 
 @Injectable()
 export class RidesService {
   constructor(
     @InjectRepository(Ride)
-    private ridesRepository: Repository<Ride>,
-    private dataSource: DataSource,
+    private readonly ridesRepository: Repository<Ride>,
   ) {}
 
+  private static toPoint(lat: number, lng: number): Point {
+    return { type: 'Point', coordinates: [lng, lat] };
+  }
+
   async create(dto: CreateRideDto, riderUserId: string): Promise<Ride> {
-    // TODO: Enforce idempotency key deduplication
+    const ride = this.ridesRepository.create({
+      rider_user: { id: riderUserId } as User,
+      status: 'requested',
+      pickup: RidesService.toPoint(dto.pickup.lat, dto.pickup.lng),
+      dropoff: RidesService.toPoint(dto.dropoff.lat, dto.dropoff.lng),
+      requested_at: new Date(),
+    });
 
-    // Create PostGIS points from lat/lng
-    const pickupPoint = `ST_SetSRID(ST_MakePoint(${dto.pickup.lng}, ${dto.pickup.lat}), 4326)`;
-    const dropoffPoint = `ST_SetSRID(ST_MakePoint(${dto.dropoff.lng}, ${dto.dropoff.lat}), 4326)`;
-
-    // Use raw query to insert geometry
-    const result = await this.dataSource.query(
-      `INSERT INTO rides (rider_user_id, status, pickup, dropoff, requested_at)
-       VALUES ($1, 'requested', ${pickupPoint}, ${dropoffPoint}, NOW())
-       RETURNING id`,
-      [riderUserId],
-    );
-
-    return this.findById(result[0].id);
+    return this.ridesRepository.save(ride);
   }
 
   async findById(id: string): Promise<Ride> {
     const ride = await this.ridesRepository.findOne({
       where: { id },
-      relations: ['rider_user', 'driver'],
+      relations: ['rider_user', 'driver', 'driver.user'],
     });
     if (!ride) {
       throw new NotFoundException(`Ride with ID ${id} not found`);
@@ -41,15 +40,14 @@ export class RidesService {
     return ride;
   }
 
-  async cancel(id: string, userId: string, reason?: string): Promise<void> {
+  async cancel(id: string, actorUserId: string, reason?: string): Promise<void> {
     const ride = await this.findById(id);
-    
-    // Check ownership
-    if (ride.rider_user.id !== userId && ride.driver?.user?.id !== userId) {
-      throw new BadRequestException('Not authorized to cancel this ride');
+
+    const driverUserId = ride.driver?.user?.id;
+    if (ride.rider_user.id !== actorUserId && driverUserId !== actorUserId) {
+      throw new BadRequestException('Not authorized to cancel this ride.');
     }
 
-    // Check if can be cancelled
     if (['completed', 'cancelled'].includes(ride.status)) {
       throw new BadRequestException(`Cannot cancel ride in status: ${ride.status}`);
     }
@@ -57,14 +55,15 @@ export class RidesService {
     ride.status = 'cancelled';
     ride.cancelled_at = new Date();
     ride.cancellation_reason = reason;
+
     await this.ridesRepository.save(ride);
   }
 
   async start(id: string, driverId: string): Promise<void> {
     const ride = await this.findById(id);
-    
+
     if (ride.driver?.id !== driverId) {
-      throw new BadRequestException('Not the assigned driver');
+      throw new BadRequestException('Not the assigned driver.');
     }
 
     if (ride.status !== 'assigned' && ride.status !== 'driver_arrived') {
@@ -73,14 +72,15 @@ export class RidesService {
 
     ride.status = 'started';
     ride.started_at = new Date();
+
     await this.ridesRepository.save(ride);
   }
 
   async complete(id: string, driverId: string, dto: CompleteRideDto): Promise<void> {
     const ride = await this.findById(id);
-    
+
     if (ride.driver?.id !== driverId) {
-      throw new BadRequestException('Not the assigned driver');
+      throw new BadRequestException('Not the assigned driver.');
     }
 
     if (ride.status !== 'started') {

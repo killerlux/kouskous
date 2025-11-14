@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
+  Point,
 } from 'typeorm';
 import { User } from '../users/user.entity';
 import { Driver } from '../drivers/driver.entity';
@@ -38,12 +39,11 @@ export class Ride {
   })
   status: RideStatus;
 
-  // PostGIS geometry columns - stored as text in TypeORM, use raw SQL for spatial queries
   @Column({ type: 'geometry', spatialFeatureType: 'Point', srid: 4326 })
-  pickup: string;
+  pickup: Point;
 
   @Column({ type: 'geometry', spatialFeatureType: 'Point', srid: 4326 })
-  dropoff: string;
+  dropoff: Point;
 
   @Column({ type: 'int', nullable: true })
   est_price_cents?: number;
