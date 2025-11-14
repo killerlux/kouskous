@@ -1,0 +1,24 @@
+# Misc
+*.log
+*.tmp
+.DS_Store
+
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+pubspec.lock
+build/
+
+# IDE
+.idea/
+.vscode/
+
+# Generated files
+coverage/
+/ios/Pods/
+/android/.gradle/
+/android/app/*.keystore
+/android/app/*.jks
+
