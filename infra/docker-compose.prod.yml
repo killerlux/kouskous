@@ -1,0 +1,67 @@
+version: "3.9"
+
+services:
+  backend:
+    image: ghcr.io/killerlux/kouskous/backend:main
+    env_file: ./prod.env
+    environment:
+      NODE_ENV: production
+    ports:
+      - "4000:4000"
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: always
+
+  realtime:
+    image: ghcr.io/killerlux/kouskous/realtime:main
+    env_file: ./prod.env
+    environment:
+      NODE_ENV: production
+    ports:
+      - "4001:4001"
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: always
+
+  admin:
+    image: ghcr.io/killerlux/kouskous/admin:main
+    env_file: ./prod.env
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+    ports:
+      - "4002:3000"
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "60", "1000", "--loglevel", "warning"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Optional local Postgres if not using managed DO instance.
+  postgres:
+    image: postgis/postgis:16-3.4
+    profiles: ["local-db"]
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: taxi
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+  postgres-data:
+

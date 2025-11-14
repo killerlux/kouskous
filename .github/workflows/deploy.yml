@@ -1,0 +1,51 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        description: Target environment
+        options: [production]
+        default: production
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: github.event.inputs.environment == 'production'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Copy compose file to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_SSH_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          source: "infra/docker-compose.prod.yml"
+          target: "/opt/taxi/"
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_SSH_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          envs: GHCR_PAT=${{ secrets.GHCR_PAT }}
+          script: |
+            set -euo pipefail
+            cd /opt/taxi
+            if [ ! -f prod.env ]; then
+              echo "prod.env missing. Create it from infra/prod.env.example" >&2
+              exit 1
+            fi
+            echo "${GHCR_PAT}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker compose -f docker-compose.prod.yml --env-file prod.env pull
+            docker compose -f docker-compose.prod.yml --env-file prod.env up -d --remove-orphans
+            docker system prune -f
+
