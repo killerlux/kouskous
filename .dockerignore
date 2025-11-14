@@ -1,0 +1,17 @@
+.git
+.github
+node_modules
+**/node_modules
+dist
+.dart_tool
+.terraform
+.vscode
+.idea
+**/*.log
+coverage
+.next
+build
+apps/mobile_client/build
+.env
+.env.local
+
