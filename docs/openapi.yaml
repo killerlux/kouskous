@@ -1,0 +1,352 @@
+openapi: 3.0.3
+info:
+  title: Taxi Platform API
+  version: "1.1.0"
+  description: |
+    REST API for Tunisian taxi ride-hailing platform.
+    Cash-only payments. Driver earnings lock at 1000 TND until deposit receipt approved.
+servers:
+  - url: https://api.example.com
+    description: Production
+  - url: https://staging.api.example.com
+    description: Staging
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    UUID:
+      type: string
+      format: uuid
+    GeoPoint:
+      type: object
+      required: [lat, lng]
+      properties:
+        lat: { type: number, format: double }
+        lng: { type: number, format: double }
+    RideStatus:
+      type: string
+      enum: [requested, offered, assigned, driver_arrived, started, completed, cancelled]
+    User:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/UUID' }
+        phone_e164: { type: string }
+        role: { type: string, enum: [client, driver, admin] }
+        display_name: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+    Driver:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/UUID' }
+        user_id: { $ref: '#/components/schemas/UUID' }
+        license_number: { type: string }
+        license_expiry: { type: string, format: date }
+        verified_at: { type: string, format: date-time, nullable: true }
+        earnings_cents: { type: integer, format: int64 }
+        created_at: { type: string, format: date-time }
+    Ride:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/UUID' }
+        rider_user_id: { $ref: '#/components/schemas/UUID' }
+        driver_id: { $ref: '#/components/schemas/UUID', nullable: true }
+        status: { $ref: '#/components/schemas/RideStatus' }
+        pickup: { $ref: '#/components/schemas/GeoPoint' }
+        dropoff: { $ref: '#/components/schemas/GeoPoint' }
+        est_price_cents: { type: integer, nullable: true }
+        price_cents: { type: integer, nullable: true }
+        distance_m: { type: integer, nullable: true }
+        duration_s: { type: integer, nullable: true }
+        requested_at: { type: string, format: date-time }
+        assigned_at: { type: string, format: date-time, nullable: true }
+        started_at: { type: string, format: date-time, nullable: true }
+        completed_at: { type: string, format: date-time, nullable: true }
+        cancelled_at: { type: string, format: date-time, nullable: true }
+        cancellation_reason: { type: string, nullable: true }
+paths:
+  /auth/verify-phone:
+    post:
+      summary: Send OTP to phone
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone_e164]
+              properties:
+                phone_e164: { type: string, example: "+21612345678" }
+      responses:
+        '204':
+          description: OTP sent
+        '429':
+          description: Rate limit exceeded
+  /auth/exchange-token:
+    post:
+      summary: Exchange OTP for JWT
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone_e164, otp_code]
+              properties:
+                phone_e164: { type: string }
+                otp_code: { type: string }
+      responses:
+        '200':
+          description: Tokens
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token: { type: string }
+                  refresh_token: { type: string }
+                  expires_in: { type: integer }
+        '401':
+          description: Invalid OTP
+  /users/me:
+    get:
+      security: [ { bearerAuth: [] } ]
+      summary: Current user
+      tags: [Users]
+      responses:
+        '200':
+          description: User
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+  /drivers/me:
+    get:
+      security: [ { bearerAuth: [] } ]
+      summary: Current driver profile
+      tags: [Drivers]
+      responses:
+        '200':
+          description: Driver
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Driver' }
+        '403':
+          description: Not a driver
+  /drivers/documents:
+    post:
+      security: [ { bearerAuth: [] } ]
+      summary: Upload driver document metadata (pre-signed upload handled separately)
+      tags: [Drivers]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kind, url]
+              properties:
+                kind: { type: string, enum: [license, carte_grise, assurance, photo_id] }
+                url:  { type: string, format: uri }
+      responses:
+        '201': { description: Created }
+  /rides:
+    post:
+      security: [ { bearerAuth: [] } ]
+      summary: Request a ride
+      tags: [Rides]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pickup, dropoff]
+              properties:
+                pickup: { $ref: '#/components/schemas/GeoPoint' }
+                dropoff: { $ref: '#/components/schemas/GeoPoint' }
+                idempotency_key: { type: string }
+      responses:
+        '201':
+          description: Ride created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Ride' }
+        '429':
+          description: Rate limit exceeded
+  /rides/{id}:
+    get:
+      security: [ { bearerAuth: [] } ]
+      summary: Get ride by id
+      tags: [Rides]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      responses:
+        '200':
+          description: Ride
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Ride' }
+        '404':
+          description: Ride not found
+  /rides/{id}/cancel:
+    post:
+      security: [ { bearerAuth: [] } ]
+      summary: Cancel ride
+      tags: [Rides]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string }
+      responses:
+        '204': { description: Cancelled }
+        '400':
+          description: Cannot cancel in current state
+  /rides/{id}/start:
+    post:
+      security: [ { bearerAuth: [] } ]
+      summary: Driver starts the ride
+      tags: [Rides]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      responses:
+        '204': { description: Started }
+        '403':
+          description: Not the assigned driver
+  /rides/{id}/complete:
+    post:
+      security: [ { bearerAuth: [] } ]
+      summary: Driver completes the ride and records cash
+      tags: [Rides]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [price_cents]
+              properties:
+                price_cents: { type: integer, minimum: 0 }
+      responses:
+        '204': { description: Completed }
+        '403':
+          description: Not the assigned driver
+  /deposits:
+    post:
+      security: [ { bearerAuth: [] } ]
+      summary: Submit a deposit receipt for approval
+      tags: [Deposits]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount_cents, receipt_url]
+              properties:
+                amount_cents: { type: integer, minimum: 0 }
+                receipt_url: { type: string, format: uri }
+                notes: { type: string }
+      responses:
+        '201': { description: Submitted }
+        '400':
+          description: Driver not locked or amount mismatch
+  /deposits/{id}/approve:
+    post:
+      security: [ { bearerAuth: [] } ]
+      summary: Approve a deposit (admin)
+      tags: [Deposits, Admin]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      responses:
+        '204': { description: Approved }
+        '403':
+          description: Not admin
+  /deposits/{id}/reject:
+    post:
+      security: [ { bearerAuth: [] } ]
+      summary: Reject a deposit (admin)
+      tags: [Deposits, Admin]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string }
+      responses:
+        '204': { description: Rejected }
+        '403':
+          description: Not admin
+  /admin/verification-queue:
+    get:
+      security: [ { bearerAuth: [] } ]
+      summary: Get pending driver verifications (admin)
+      tags: [Admin]
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20 }
+      responses:
+        '200':
+          description: List of pending verifications
+        '403':
+          description: Not admin
+  /admin/drivers/{id}/verify:
+    post:
+      security: [ { bearerAuth: [] } ]
+      summary: Approve/reject driver verification (admin)
+      tags: [Admin]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { $ref: '#/components/schemas/UUID' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [approved]
+              properties:
+                approved: { type: boolean }
+                notes: { type: string }
+      responses:
+        '204': { description: Verification updated }
+        '403':
+          description: Not admin
+

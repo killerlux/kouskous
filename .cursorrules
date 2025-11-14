@@ -1,0 +1,336 @@
+# Cursor Rules — Taxi Platform Monorepo (v1.1)
+
+## 🎯 Golden Rules
+- **Architecture First**: Always conform to `/docs/ARCHITECTURE.md` and `/docs/openapi.yaml`. If architecture is unclear, generate/update it first before coding.
+- **Contracts are Law**: Any API change MUST update OpenAPI + regenerate SDK in `/packages/shared/sdk`. Breaking changes require version bump.
+- **Small PRs**: Keep diffs focused (<300 LOC). One feature/fix per PR with tests.
+- **No Secrets**: Never commit secrets, API keys, or credentials. Use `.env.example` and secret managers (DO Secrets/Doppler/Cloudflare).
+- **Conventional Commits**: Use `feat:`, `fix:`, `refactor:`, `perf:`, `chore:`, `docs:`, `test:`, `build:`, `ci:` prefixes.
+
+---
+
+## 🏗️ Architecture & Project Structure
+
+### Monorepo Layout
+```
+/apps
+  /backend          # NestJS REST API
+  /realtime         # Socket.IO dispatch service
+  /admin            # Next.js admin web
+  /mobile_client    # Flutter client app
+  /mobile_driver    # Flutter driver app
+/packages
+  /shared           # Types, generated SDK, shared configs
+/infra              # Terraform, Docker, Compose, Prometheus, Grafana
+/docs               # Architecture, security, test plans, runbooks
+```
+
+### Key Constraints
+- **Scope**: Tunisian licensed taxis only. Cash-only payments.
+- **Driver Lock**: When earnings ≥ 1000 TND, lock availability until Poste deposit receipt approved.
+- **Hosting**: Online (DigitalOcean) for production. Managed Postgres + Redis.
+- **Maps**: Google Maps Platform (tiles, geocoding, directions, distance matrix).
+- **Auth**: Firebase phone OTP → server-issued JWT (15min) + refresh flow.
+
+---
+
+## 🔧 Backend (NestJS)
+
+### Code Style
+- **TypeScript**: Strict mode enabled. No `any` without explicit `@ts-expect-error` comment.
+- **NestJS Architecture**: Modules → Services → Controllers. Use dependency injection.
+- **DTOs**: All endpoints use DTOs with `class-validator`. Validation pipe enabled globally.
+- **Error Handling**: Consistent error envelopes: `{ ok: boolean, error?: string, data?: any }`.
+- **ESLint + Prettier**: Enforce via CI. No warnings allowed.
+
+### Database (TypeORM + PostgreSQL + PostGIS)
+- **Migrations**: All schema changes via TypeORM migrations. Never use `synchronize: true` in prod.
+- **IDs**: Prefer UUID v7 semantics (time-sortable). Fallback to `gen_random_uuid()`.
+- **Geo Data**: Use PostGIS `geometry(Point,4326)` for pickup/dropoff. Always create GiST indexes.
+- **Indexes**: Create indexes for:
+  - Foreign keys
+  - Geo columns (GiST)
+  - Status/enum columns used in WHERE clauses
+  - Composite indexes for common query patterns
+- **Materialized Views**: Use `driver_balances_mv` for fast balance queries. Refresh via `refresh_driver_balances()` function after ledger writes.
+
+### Redis
+- **Queues**: Use BullMQ for async jobs (notifications, balance refresh).
+- **Cache**: ioredis client. Always set TTLs for presence/rate-limit keys.
+- **Presence**: Driver online/offline state in Redis with TTL heartbeats.
+
+### API Contracts
+- **OpenAPI**: Single source of truth in `/docs/openapi.yaml`. Generate Swagger UI.
+- **SDK Generation**: Auto-generate TypeScript SDK in `/packages/shared/sdk` from OpenAPI.
+- **Idempotency**: Ride requests require `idempotency_key`. Deduplicate server-side.
+
+---
+
+## ⚡ Realtime/Dispatch (Socket.IO)
+
+### Namespaces
+- `/client` - Passenger events
+- `/driver` - Driver events  
+- `/admin` - Admin monitoring
+
+### Event Contracts
+- **Acks Required**: Every event MUST ack with `{ ok: boolean, error?: string, data?: any }`.
+- **Typed Events**: Use TypeScript interfaces for all event payloads.
+- **Backpressure**: Implement reconnection strategy. Handle socket storms gracefully.
+
+### GPS Anti-Spoofing (Server-Side)
+- **Accuracy Filter**: Drop updates with `accuracy > 50m`.
+- **Teleport Detection**: Reject jumps >250m in 2s window.
+- **Speed Limits**: Flag speeds >160 km/h as suspicious.
+- **Road Snapping**: Server-side snap to nearest road segment (optional, use Google Roads API).
+
+### Dispatch Algorithm v1
+- **KNN Search**: PostGIS `ST_DWithin` + `ORDER BY ST_Distance` within radius.
+- **Tie-Breakers**: Proximity first, then idle time.
+- **Timeout**: 20s accept window. Retry up to 2 drivers. Fallback to broadcast.
+- **Rate Limiting**: Per-user ride request limits. Deduplicate via idempotency key.
+
+---
+
+## 📱 Flutter (Mobile Apps)
+
+### State Management
+- **Riverpod**: Use for all state. No Provider/Bloc.
+- **Freezed**: All models immutable with `@freezed`. Code generation required.
+- **Repositories**: All HTTP/Socket calls in repositories. No business logic in Widgets.
+
+### Code Organization
+- **Screens**: One screen per file. Extract reusable widgets.
+- **Localization**: Support AR/FR/EN via `flutter_localizations`. All strings in `.arb` files.
+- **Offline**: Use Hive for local caching. Handle network failures gracefully.
+
+### Performance
+- **60 FPS Target**: Profile with Flutter DevTools. Optimize rebuilds.
+- **Image Optimization**: Compress images before upload. Use cached network images.
+- **Background Location**: Battery-aware throttling (5s moving, 20s idle).
+
+### Testing
+- **Golden Tests**: Critical UI screens (auth, map, ride flow) must have golden tests.
+- **Integration Tests**: Full ride lifecycle (request → accept → complete) covered.
+- **Lints**: Strict mode. No warnings in CI.
+
+### Driver App Specifics
+- **Earnings Lock**: When `earnings_total >= 1000 TND`, force offline. Block accept button.
+- **Deposit Workflow**: Upload Poste receipt (image + optional OCR via MLKit).
+- **GPS Warnings**: Show accuracy warnings if <50m. Anti-spoof UI hints.
+
+---
+
+## 🌐 Admin Web (Next.js)
+
+### Framework
+- **Next.js 14**: App Router (not Pages Router).
+- **React 18**: Server components where possible.
+- **TanStack Query**: All data fetching via React Query. Never use `fetch` directly.
+
+### SDK Usage
+- **Generated SDK**: Always use `/packages/shared/sdk` for API calls. No manual fetch.
+- **Type Safety**: SDK provides full TypeScript types. No `any` types.
+
+### Accessibility
+- **WCAG AA**: All components accessible. Use semantic HTML, ARIA labels.
+- **Keyboard Navigation**: Full keyboard support for all interactive elements.
+
+### Testing
+- **E2E**: Playwright tests for critical flows (verification, deposit approval).
+- **Component Tests**: React Testing Library for isolated components.
+
+---
+
+## 🔒 Security
+
+### Authentication & Authorization
+- **RBAC**: Role-based guards (`@Roles('admin')`). Resource ownership checks.
+- **JWT**: Short-lived (15min) access tokens. Refresh tokens stored securely.
+- **Device Binding**: Track device tokens. Require re-auth on device change.
+
+### Input Validation
+- **DTOs**: All inputs validated via class-validator/zod.
+- **Sanitization**: Centralized sanitization for user-generated content.
+- **SQL Injection**: Use parameterized queries (TypeORM handles this).
+
+### Rate Limiting
+- **IP + User Scopes**: Stricter limits for `/auth` and `/rides`.
+- **Redis-Based**: Use `@nestjs/throttler` or custom Redis rate limiter.
+
+### GPS Anti-Spoofing
+- **Server-Side Validation**: Accuracy, teleport, speed checks (see Realtime section).
+- **Driver Scoring**: Track suspicious patterns. Auto-ban repeat offenders.
+
+### Documents & Receipts
+- **EXIF Checks**: Validate image metadata. Detect tampering.
+- **Liveness**: Random prompts for live photos (future enhancement).
+- **Manual Review**: All deposit receipts require admin approval with audit trail.
+
+### Secrets Management
+- **Never in Repo**: Use environment variables + secret managers.
+- **Rotation**: Rotate secrets every 90 days.
+- **Backup Encryption**: Encrypt backups at rest.
+
+### Logging
+- **No PII**: Redact phone numbers, names, addresses from logs.
+- **Security Events**: Dedicated index for security events (failed auth, suspicious GPS).
+- **Structured JSON**: All logs in structured JSON format.
+
+---
+
+## 🧪 Testing
+
+### Backend
+- **Unit Tests**: ≥80% coverage on core modules (auth, dispatch, earnings).
+- **Integration Tests**: Use Testcontainers for Postgres + Redis. Test full flows.
+- **Socket Tests**: Simulate client/driver connections. Test event flows.
+
+### Flutter
+- **Widget Tests**: Critical screens (auth, map, ride status).
+- **Integration Tests**: Full ride lifecycle. Test offline scenarios.
+- **Golden Tests**: UI regression tests for key screens.
+
+### Admin
+- **E2E**: Playwright for user flows (verification, deposit approval).
+- **Component Tests**: React Testing Library.
+
+### Load Testing
+- **k6 Scripts**: Test 1000 concurrent drivers. Measure dispatch latency p95.
+- **SLO Verification**: CI nightly runs verify SLOs (dispatch p95 < 4s).
+
+---
+
+## 📊 Observability
+
+### Metrics (Prometheus)
+- `dispatch_latency_ms` (p50, p95, p99)
+- `ride_request_rate`
+- `ws_active_connections`
+- `driver_lock_count`
+- `db_query_latency`
+
+### Logs (Loki)
+- Structured JSON format
+- Correlation IDs for request tracing
+- No PII in logs
+
+### Traces (OpenTelemetry)
+- HTTP requests (NestJS interceptors)
+- Socket.IO events
+- Database queries
+
+### Dashboards (Grafana)
+- Real-time ride metrics
+- Driver availability
+- Error rates
+- System health
+
+### Alerts (Alertmanager)
+- **Critical**: p95 dispatch latency > 4s for 10min
+- **Critical**: DB error rate > 1%
+- **Warning**: WS disconnect storms
+- **Warning**: Driver lock count spike
+
+### SLOs
+- **API Availability**: 99.9% monthly
+- **Dispatch Latency**: p95 < 4s under 1000 concurrent drivers
+- **Location Ingest**: Error rate < 1%
+
+---
+
+## 🚀 Deployment & DevOps
+
+### Environments
+- **dev** → **staging** → **prod**
+- Feature flags for risky features (e.g., broadcast dispatch).
+
+### Migrations
+- **Zero-Downtime**: Add column → backfill → switch pattern.
+- **Dry-Run**: CI runs migration dry-run before merge.
+
+### Rollout Strategy
+- **Blue/Green**: For realtime service (canary 10% traffic).
+- **Rolling**: For API (health checks required).
+
+### Infrastructure (DigitalOcean)
+- **Managed Services**: Postgres 16 + PostGIS, Redis 7.
+- **Droplets**: Separate for API and Realtime (4 vCPU/8GB each).
+- **Cloudflare**: DNS, TLS termination, DDoS protection.
+
+### CI/CD (GitHub Actions)
+- **Required Checks**: Build, lint, test, migration dry-run, Trivy scan.
+- **Image Build**: Build Docker images on merge to main.
+- **Deploy**: SSH rollout to droplets (or Nomad/K8s if scaled).
+
+### Backups
+- **Postgres**: Nightly snapshots, 14-day retention.
+- **Object Storage**: Versioned (S3/DO Spaces).
+- **Restore Drills**: Monthly restore tests.
+
+---
+
+## 📝 Documentation
+
+### Required Docs
+- `/docs/ARCHITECTURE.md` - System architecture (C4, data model, APIs)
+- `/docs/openapi.yaml` - API contract (OpenAPI 3.0)
+- `/docs/security.md` - Security checklist, threat model
+- `/docs/test_plan.md` - Test strategy, coverage goals
+- `/docs/runbooks/` - Operational runbooks (deploy, restore, incident)
+
+### Update Rules
+- **Same PR**: Update architecture/docs in the same PR as code changes.
+- **API Changes**: Regenerate SDK and bump version.
+- **Breaking Changes**: Document migration path.
+
+---
+
+## 🚫 Don't Touch Without Approval
+
+- Database schema tables for payments (future feature)
+- Migrations older than production baseline
+- CI critical pipelines (build/test/deploy)
+- Security controls (rate limits, auth guards)
+- SLO definitions and alert thresholds
+
+---
+
+## 🔍 Code Review Checklist
+
+Before merging, verify:
+- [ ] Tests added/updated (unit + integration)
+- [ ] Docs updated (architecture, API, runbooks)
+- [ ] No secrets committed
+- [ ] CI passing (build, lint, test, scan)
+- [ ] OpenAPI updated + SDK regenerated (if API changed)
+- [ ] Migration tested (dry-run in CI)
+- [ ] Security review (if auth/earnings/deposits changed)
+- [ ] Performance impact assessed (if dispatch/algorithms changed)
+
+---
+
+## 🎓 Learning Resources
+
+- **NestJS**: https://docs.nestjs.com
+- **PostGIS**: https://postgis.net/documentation
+- **Socket.IO**: https://socket.io/docs/v4
+- **Flutter**: https://docs.flutter.dev
+- **Next.js**: https://nextjs.org/docs
+
+---
+
+## 📞 Questions?
+
+If architecture/contracts unclear:
+1. Check `/docs/ARCHITECTURE.md`
+2. Check `/docs/openapi.yaml`
+3. Ask to generate/update architecture first
+4. Never assume - clarify before coding
+
+---
+
+**Version**: 1.1  
+**Last Updated**: 2025-01-14  
+**Maintainer**: Backend Lead + DevOps Lead
+

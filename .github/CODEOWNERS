@@ -1,0 +1,33 @@
+# CODEOWNERS
+# Each line is a file pattern followed by one or more owners.
+# Order is important; the last matching pattern takes precedence.
+
+# Global owners
+* @backend-lead @devops-lead
+
+# Backend
+/apps/backend/ @backend-lead
+/apps/realtime/ @realtime-lead
+
+# Mobile
+/apps/mobile_client/ @mobile-lead
+/apps/mobile_driver/ @mobile-lead
+
+# Admin
+/apps/admin/ @frontend-lead
+
+# Shared packages
+/packages/shared/ @backend-lead @frontend-lead
+
+# Infrastructure
+/infra/ @devops-lead
+
+# Documentation
+/docs/ARCHITECTURE.md @backend-lead @devops-lead
+/docs/openapi.yaml @backend-lead
+/docs/security.md @security-lead
+/docs/test_plan.md @qa-lead
+
+# CI/CD
+.github/workflows/ @devops-lead
+
