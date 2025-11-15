@@ -2,7 +2,6 @@
 'use client';
 
 import { Sidebar } from '@/components/layout/Sidebar';
-import { Topbar } from '@/components/layout/Topbar';
 import { AuthGuard } from '@/components/AuthGuard';
 
 export default function DashboardLayout({
