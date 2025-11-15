@@ -1,11 +1,18 @@
 // apps/admin/src/lib/api.ts
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import {
+  Configuration,
+  AuthApi,
+  UsersApi,
+  AdminApi,
+  DepositsApi,
+} from '@taxi/shared/sdk';
 import { useAuthStore } from '@/stores/authStore';
 
 // Base API URL from environment
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
-// Create axios instance
+// Create axios instance for interceptors
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
@@ -76,23 +83,36 @@ apiClient.interceptors.response.use(
   }
 );
 
-// API helper functions
+// Create SDK configuration with custom axios instance
+const sdkConfig = new Configuration({
+  basePath: API_BASE_URL,
+});
+
+// Create API instances using generated SDK
+const authApi = new AuthApi(sdkConfig, API_BASE_URL, apiClient);
+const usersApi = new UsersApi(sdkConfig, API_BASE_URL, apiClient);
+const adminApi = new AdminApi(sdkConfig, API_BASE_URL, apiClient);
+const depositsApi = new DepositsApi(sdkConfig, API_BASE_URL, apiClient);
+
+// Export SDK-based API
 export const api = {
   // Auth
   verifyPhone: (phone: string) =>
-    apiClient.post('/auth/verify-phone', { phone_e164: phone }),
+    authApi.authVerifyPhonePost({ authVerifyPhonePostRequest: { phone_e164: phone } }),
 
   exchangeToken: (phone: string, otp: string) =>
-    apiClient.post('/auth/exchange-token', { phone_e164: phone, otp_code: otp }),
+    authApi.authExchangeTokenPost({
+      authExchangeTokenPostRequest: { phone_e164: phone, otp_code: otp },
+    }),
 
   // User
-  getMe: () => apiClient.get('/users/me'),
+  getMe: () => usersApi.usersMeGet(),
 
-  // Deposits
+  // Admin - Deposits
   getPendingDeposits: (page = 1, limit = 20) =>
-    apiClient.get('/admin/deposits', { params: { page, limit, status: 'pending' } }),
+    adminApi.adminDepositsGet({ page, limit, status: 'pending' }),
 
-  getDeposit: (id: string) => apiClient.get(`/admin/deposits/${id}`),
+  getDeposit: (id: string) => adminApi.adminDepositsIdGet({ id }),
 
   approveDeposit: (id: string, notes?: string) =>
     apiClient.post(`/admin/deposits/${id}/approve`, { notes }),
@@ -100,8 +120,7 @@ export const api = {
   rejectDeposit: (id: string, notes: string) =>
     apiClient.post(`/admin/deposits/${id}/reject`, { notes }),
 
-  // Dashboard stats (placeholder)
-  getDashboardStats: () =>
-    apiClient.get('/admin/dashboard/stats'),
+  // Dashboard stats (placeholder - not in SDK yet)
+  getDashboardStats: () => apiClient.get('/admin/dashboard/stats'),
 };
 
