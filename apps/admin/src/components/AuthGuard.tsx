@@ -7,7 +7,8 @@ import { useAuthStore } from '@/stores/authStore';
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, isAdmin } = useAuthStore();
+  const { isAuthenticated, isAdmin, user } = useAuthStore();
+  const isAdminUser = user?.role === 'admin';
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
@@ -32,14 +33,14 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     }
 
     // If authenticated but not admin, redirect to login
-    if (!isAdmin) {
+    if (!isAdminUser) {
       router.push(`/${locale}/login`);
       return;
     }
-  }, [isAuthenticated, isAdmin, pathname, router, isChecking]);
+  }, [isAuthenticated, isAdminUser, pathname, router, isChecking]);
 
   // Show loading while checking or if not authenticated
-  if (isChecking || !isAuthenticated || !isAdmin) {
+  if (isChecking || !isAuthenticated || !isAdminUser) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">

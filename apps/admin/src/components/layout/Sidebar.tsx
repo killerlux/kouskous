@@ -51,6 +51,7 @@ const navItems: NavItem[] = [
 export const Sidebar: React.FC = () => {
   const pathname = usePathname();
   const { user, logout } = useAuthStore();
+  const isAdmin = user?.role === 'admin';
 
   const handleLogout = () => {
     logout();
