@@ -70,8 +70,9 @@ export default function LoginPage() {
       // Store user
       setUser(user);
 
-      // Redirect to dashboard
-      router.push('/dashboard');
+      // Redirect to dashboard (with locale)
+      const locale = window.location.pathname.split('/')[1] || 'fr';
+      router.push(`/${locale}/dashboard`);
     } catch (err) {
       const error = err as { response?: { data?: { error?: string } } };
       setError(

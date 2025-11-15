@@ -44,9 +44,13 @@ export function middleware(request: NextRequest) {
 
   // If not authenticated and trying to access protected route
   if (!isAuthenticated && !isPublicRoute && pathnameWithoutLocale !== '/') {
-    const locale = pathname.split('/')[1];
-    const loginUrl = new URL(`/${locale}/login`, request.url);
-    return NextResponse.redirect(loginUrl);
+    // Get locale from pathname or use default
+    const locale = pathname.split('/')[1] || defaultLocale;
+    // Only redirect if we're not already on login page
+    if (pathnameWithoutLocale !== '/login') {
+      const loginUrl = new URL(`/${locale}/login`, request.url);
+      return NextResponse.redirect(loginUrl);
+    }
   }
 
   // If authenticated but not admin, deny access
@@ -59,9 +63,15 @@ export function middleware(request: NextRequest) {
 
   // If authenticated and trying to access login page, redirect to dashboard
   if (isAuthenticated && isAdmin && pathnameWithoutLocale === '/login') {
-    const locale = pathname.split('/')[1];
+    const locale = pathname.split('/')[1] || defaultLocale;
     const dashboardUrl = new URL(`/${locale}/dashboard`, request.url);
     return NextResponse.redirect(dashboardUrl);
+  }
+
+  // Handle root path - redirect to locale-prefixed path
+  if (pathname === '/' || pathname === '') {
+    const loginUrl = new URL(`/${defaultLocale}/login`, request.url);
+    return NextResponse.redirect(loginUrl);
   }
 
   return intlResponse;
