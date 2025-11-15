@@ -27,6 +27,8 @@ out/
 .env.production.local
 .env*.local
 infra/prod.env
+# Allow .env.example files (templates)
+!.env.example
 
 # Logs
 logs/

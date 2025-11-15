@@ -41,7 +41,7 @@
 
 ### **Rotate the Exposed API Key**
 
-The key `AIzaSyA9kOBa77XHSzL79SK6u6_bqPXUJba76b0` was exposed. You must:
+The Google Maps API key was exposed in documentation. You must:
 
 1. **Go to Google Cloud Console**: https://console.cloud.google.com/google/maps-apis/credentials
 2. **Delete or restrict** the exposed key
@@ -92,8 +92,8 @@ The key `AIzaSyA9kOBa77XHSzL79SK6u6_bqPXUJba76b0` was exposed. You must:
 To verify the key is removed from history:
 
 ```bash
-# Search for the key in git history
-git log --all -S "AIzaSyA9kOBa77XHSzL79SK6u6_bqPXUJba76b0" --oneline
+# Search for the key in git history (replace with your exposed key)
+git log --all -S "YOUR_EXPOSED_KEY" --oneline
 
 # If found, you may want to use git-filter-repo to remove it
 # (Only if the key is still in old commits)
@@ -102,8 +102,8 @@ git log --all -S "AIzaSyA9kOBa77XHSzL79SK6u6_bqPXUJba76b0" --oneline
 ### **Check Current Files**
 
 ```bash
-# Search for any remaining instances
-grep -r "AIzaSyA9kOBa77XHSzL79SK6u6_bqPXUJba76b0" . --exclude-dir=.git
+# Search for any remaining instances (replace with your exposed key)
+grep -r "YOUR_EXPOSED_KEY" . --exclude-dir=.git
 # Should return nothing
 ```
 
