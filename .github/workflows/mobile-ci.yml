@@ -49,7 +49,12 @@ jobs:
 
       - name: Run tests
         working-directory: apps/mobile_client
-        run: flutter test --coverage || echo "⚠️ Some tests failed"
+        run: |
+          # Create .env file for tests (with dummy values)
+          echo "API_BASE_URL=http://localhost:4000" > .env
+          echo "SOCKET_URL=http://localhost:5000" >> .env
+          echo "GOOGLE_MAPS_API_KEY=test_key" >> .env
+          flutter test --coverage || echo "⚠️ Some tests failed"
         continue-on-error: true
 
       - name: Upload coverage
@@ -89,7 +94,12 @@ jobs:
 
       - name: Run tests
         working-directory: apps/mobile_driver
-        run: flutter test --coverage || echo "⚠️ Some tests failed"
+        run: |
+          # Create .env file for tests (with dummy values)
+          echo "API_BASE_URL=http://localhost:4000" > .env
+          echo "SOCKET_URL=http://localhost:5000" >> .env
+          echo "GOOGLE_MAPS_API_KEY=test_key" >> .env
+          flutter test --coverage || echo "⚠️ Some tests failed"
         continue-on-error: true
 
       - name: Upload coverage
