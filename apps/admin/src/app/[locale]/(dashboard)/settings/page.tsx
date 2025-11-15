@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Settings, Bell, Shield, Globe, Database, Save } from 'lucide-react';
+import { Save } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -30,10 +30,7 @@ export default function SettingsPage() {
         <div className="max-w-4xl space-y-6">
           {/* General Settings */}
           <Card>
-            <CardHeader
-              title="Paramètres généraux"
-              icon={<Settings className="w-5 h-5" />}
-            />
+            <CardHeader title="Paramètres généraux" />
             <CardContent className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -70,10 +67,7 @@ export default function SettingsPage() {
 
           {/* Notifications */}
           <Card>
-            <CardHeader
-              title="Notifications"
-              icon={<Bell className="w-5 h-5" />}
-            />
+            <CardHeader title="Notifications" />
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -108,10 +102,7 @@ export default function SettingsPage() {
 
           {/* Security */}
           <Card>
-            <CardHeader
-              title="Sécurité"
-              icon={<Shield className="w-5 h-5" />}
-            />
+            <CardHeader title="Sécurité" />
             <CardContent className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -138,10 +129,7 @@ export default function SettingsPage() {
 
           {/* Localization */}
           <Card>
-            <CardHeader
-              title="Localisation"
-              icon={<Globe className="w-5 h-5" />}
-            />
+            <CardHeader title="Localisation" />
             <CardContent className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -166,10 +154,7 @@ export default function SettingsPage() {
 
           {/* System */}
           <Card>
-            <CardHeader
-              title="Système"
-              icon={<Database className="w-5 h-5" />}
-            />
+            <CardHeader title="Système" />
             <CardContent>
               <div className="text-sm text-gray-600 space-y-2">
                 <p>
