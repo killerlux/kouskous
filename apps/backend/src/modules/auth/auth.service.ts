@@ -18,7 +18,7 @@ interface JwtPayload {
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
-  private firebaseApp: admin.app.App;
+  private firebaseApp: admin.app.App | undefined;
 
   constructor(
     private usersService: UsersService,
