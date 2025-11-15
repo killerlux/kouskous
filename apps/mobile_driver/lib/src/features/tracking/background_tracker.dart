@@ -1,5 +1,6 @@
 // apps/mobile_driver/lib/src/features/tracking/background_tracker.dart
 import 'dart:async';
+import 'dart:isolate';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -33,8 +34,6 @@ class _TrackerTaskHandler extends TaskHandler {
   }
 }
 
-final backgroundTrackerProvider = Provider((ref) => BackgroundTracker(ref.read));
-
 class BackgroundTracker {
   final Reader read;
   BackgroundTracker(this.read);
@@ -48,30 +47,32 @@ class BackgroundTracker {
     }
     await Geolocator.isLocationServiceEnabled();
 
-    // Foreground service notification (Android)
-    await FlutterForegroundTask.init(
-      androidNotificationOptions: AndroidNotificationOptions(
-        channelId: 'driver_tracking',
-        channelName: 'Driver Tracking',
-        channelDescription: 'Location tracking for ride dispatch',
-        channelImportance: NotificationChannelImportance.LOW,
-        priority: NotificationPriority.LOW,
-        isSticky: true,
-      ),
-      iosNotificationOptions: const IOSNotificationOptions(showNotification: true),
-      foregroundTaskOptions: const ForegroundTaskOptions(
-        eventAction: ForegroundTaskEventAction.repeat(
-          interval: 15000,
+    // Foreground service notification (Android) - skip on web
+    try {
+      await FlutterForegroundTask.init(
+        androidNotificationOptions: AndroidNotificationOptions(
+          channelId: 'driver_tracking',
+          channelName: 'Driver Tracking',
+          channelDescription: 'Location tracking for ride dispatch',
+          channelImportance: NotificationChannelImportance.LOW,
+          priority: NotificationPriority.LOW,
+          isSticky: true,
         ),
-        allowWakeLock: true,
-      ),
-    );
+        iosNotificationOptions: const IOSNotificationOptions(showNotification: true),
+        foregroundTaskOptions: const ForegroundTaskOptions(
+          interval: 15000,
+          allowWakeLock: true,
+        ),
+      );
 
-    await FlutterForegroundTask.startService(
-      notificationTitle: 'You are online',
-      notificationText: 'Sharing your location with passengers',
-      callback: startCallback,
-    );
+      await FlutterForegroundTask.startService(
+        notificationTitle: 'You are online',
+        notificationText: 'Sharing your location with passengers',
+        callback: startCallback,
+      );
+    } catch (e) {
+      // Foreground task not available on web - continue without it
+    }
 
     // Emit GPS via Geolocator stream (battery-aware)
     final sc = read(socketProvider(SocketNamespace.driver));
@@ -93,7 +94,11 @@ class BackgroundTracker {
   }
 
   Future<void> stop() async {
-    await FlutterForegroundTask.stopService();
+    try {
+      await FlutterForegroundTask.stopService();
+    } catch (e) {
+      // Ignore errors on web
+    }
   }
 }
 
