@@ -22,8 +22,12 @@ export class UsersService {
     return this.usersRepository.findOne({ where: { phone_e164 } });
   }
 
-  async create(phone_e164: string, role: User['role'] = 'client'): Promise<User> {
-    const user = this.usersRepository.create({ phone_e164, role });
+  async create(data: { phone_e164: string; role?: User['role']; display_name?: string }): Promise<User> {
+    const user = this.usersRepository.create({
+      phone_e164: data.phone_e164,
+      role: data.role || 'client',
+      display_name: data.display_name,
+    });
     return this.usersRepository.save(user);
   }
 
