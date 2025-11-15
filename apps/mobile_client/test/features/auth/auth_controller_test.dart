@@ -5,10 +5,20 @@ import 'package:mobile_client/src/features/auth/auth_state.dart';
 import 'package:mobile_client/src/features/auth/phone_auth_service.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class MockPhoneAuthService extends Mock implements PhoneAuthService {}
 
 void main() {
+  setUpAll(() async {
+    // Load test environment variables
+    dotenv.testLoad(fileInput: '''
+API_BASE_URL=http://localhost:4000
+SOCKET_URL=http://localhost:5000
+GOOGLE_MAPS_API_KEY=test_key
+''');
+  });
+
   group('AuthController', () {
     late MockPhoneAuthService mockService;
 

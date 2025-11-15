@@ -3,8 +3,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:mobile_client/src/features/auth/otp_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() {
+  setUpAll(() async {
+    // Load test environment variables
+    dotenv.testLoad(fileInput: '''
+API_BASE_URL=http://localhost:4000
+SOCKET_URL=http://localhost:5000
+GOOGLE_MAPS_API_KEY=test_key
+''');
+  });
+
   group('OtpScreen', () {
     testWidgets('renders OTP input and verify button', (tester) async {
       await tester.pumpWidget(
@@ -14,6 +24,8 @@ void main() {
           ),
         ),
       );
+
+      await tester.pump();
 
       expect(find.text('Enter OTP'), findsOneWidget);
       expect(find.text('Verify'), findsOneWidget);
