@@ -1,9 +1,6 @@
-export default function Home() {
-  return (
-    <main className="min-h-screen p-8">
-      <h1 className="text-3xl font-bold mb-4">Taxi Platform Admin</h1>
-      <p>Admin dashboard coming soon...</p>
-    </main>
-  );
-}
+// apps/admin/src/app/page.tsx
+import { redirect } from 'next/navigation';
 
+export default function HomePage() {
+  redirect('/dashboard');
+}
