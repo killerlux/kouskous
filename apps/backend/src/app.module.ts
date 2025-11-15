@@ -9,6 +9,7 @@ import { RidesModule } from './modules/rides/rides.module';
 import { DepositsModule } from './modules/deposits/deposits.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { DeviceTokensModule } from './modules/device-tokens/device-tokens.module';
 import { HealthModule } from './modules/health/health.module';
 
 @Module({
@@ -40,6 +41,7 @@ import { HealthModule } from './modules/health/health.module';
     // Feature modules
     AuthModule,
     UsersModule,
+    DeviceTokensModule,
     DriversModule,
     RidesModule,
     DepositsModule,
