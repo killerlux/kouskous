@@ -30,7 +30,7 @@ A ride-hailing platform connecting licensed Tunisian taxi drivers with passenger
 ### 1. **Passengers (Clients)**
 - **Demographics**: 18-65 years, urban Tunisia
 - **Tech Savvy**: Medium (must use smartphones)
-- **Language**: Arabic (primary), French (secondary), some English
+- **Language**: French (primary), Arabic (secondary), some English
 - **Pain Points**: 
   - Hard to find taxis during peak hours
   - Unclear pricing
@@ -45,7 +45,7 @@ A ride-hailing platform connecting licensed Tunisian taxi drivers with passenger
 ### 2. **Drivers (Licensed Taxi Drivers)**
 - **Demographics**: 25-60 years, mostly male
 - **Tech Savvy**: Low to Medium
-- **Language**: Arabic (primary), some French
+- **Language**: French (primary), Arabic (secondary)
 - **Pain Points**:
   - Idle time between rides
   - Competition with street hailing
@@ -60,7 +60,7 @@ A ride-hailing platform connecting licensed Tunisian taxi drivers with passenger
 ### 3. **Admins (Platform Operators)**
 - **Demographics**: Office staff, managers
 - **Tech Savvy**: Medium to High
-- **Language**: Arabic/French bilingual
+- **Language**: French/Arabic bilingual (French primary)
 - **Pain Points**:
   - Manual verification work
   - Fraud detection
@@ -131,19 +131,19 @@ A ride-hailing platform connecting licensed Tunisian taxi drivers with passenger
 
 ### Font Recommendations
 
-**Option A: Modern Arabic + Latin**
-- **Arabic**: `Cairo` or `Tajawal` (Google Fonts)
-- **Latin**: `Inter` or `DM Sans`
-- **Rationale**: Modern, highly readable, free
+**Option A: Modern French + Arabic** (Recommended)
+- **Primary (French/Latin)**: `Inter` or `DM Sans`
+- **Secondary (Arabic)**: `Cairo` or `Tajawal` (Google Fonts)
+- **Rationale**: Modern, highly readable, free, excellent Latin support
 
 **Option B: Professional**
-- **Arabic**: `IBM Plex Sans Arabic`
-- **Latin**: `IBM Plex Sans`
-- **Rationale**: Professional, consistent across languages
+- **Primary (French/Latin)**: `IBM Plex Sans`
+- **Secondary (Arabic)**: `IBM Plex Sans Arabic`
+- **Rationale**: Professional, consistent across languages, unified family
 
 **Option C: Friendly** (Recommended for Mobile)
-- **Arabic**: `Almarai` (clean, friendly)
-- **Latin**: `Nunito Sans`
+- **Primary (French/Latin)**: `Nunito Sans`
+- **Secondary (Arabic)**: `Almarai` (clean, friendly)
 - **Rationale**: Approachable, excellent readability on mobile
 
 ### Type Scale
@@ -308,16 +308,19 @@ Level 4: 0 20px 25px rgba(0,0,0,0.15) (overlays)
 ## 🌐 Localization Requirements
 
 ### Languages (Priority Order)
-1. **Arabic** (Primary) — RTL layout
-2. **French** (Secondary) — LTR layout
+1. **French** (Primary) — LTR layout
+2. **Arabic** (Secondary) — RTL layout
 3. **English** (Optional) — LTR layout
 
-### RTL Considerations
-- Flip entire layout for Arabic
-- Mirror icons where appropriate
-- Keep numbers LTR (e.g., prices: 50 TND)
-- Keep maps LTR (universal convention)
-- Phone numbers LTR with Arabic digits option
+### Localization Considerations
+- **Default Language**: French (app starts in French)
+- **Language Switcher**: Prominent in settings, option in login
+- **RTL Support for Arabic**: 
+  - Flip entire layout when Arabic is selected
+  - Mirror icons where appropriate
+  - Keep numbers LTR regardless of language (e.g., prices: 50 TND)
+  - Keep maps LTR (universal convention)
+  - Phone numbers always LTR
 
 ### Cultural Adaptations
 - Use local currency (TND not $)

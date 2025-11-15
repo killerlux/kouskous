@@ -33,8 +33,8 @@ Background: Soft White #F8FAFC
 **Alternative**: Tunisia flag colors (Red #CE1126 + Gold #D4AF37)
 
 ### Typography
-- **Arabic**: Almarai or Cairo (Google Fonts)
-- **Latin**: Inter or Nunito Sans
+- **Primary (French)**: Inter or Nunito Sans
+- **Secondary (Arabic)**: Cairo or Almarai (Google Fonts)
 - **Weights**: Regular (400), Semibold (600), Bold (700)
 
 ---
@@ -96,9 +96,10 @@ Background: Soft White #F8FAFC
 
 ## 🌍 Localization
 
-- **Primary Language**: Arabic (RTL layout)
-- **Secondary**: French (LTR)
-- **RTL Requirements**: Flip entire layout, mirror icons, keep numbers LTR
+- **Primary Language**: French (LTR layout, default on start)
+- **Secondary**: Arabic (RTL layout when selected)
+- **Language Switcher**: Visible in settings and login screen
+- **RTL Support**: Flip layout for Arabic, mirror icons, keep numbers LTR
 - **Cultural**: Use TND currency, 24h time, Friday-Saturday weekend
 
 ---
@@ -127,8 +128,9 @@ Background: Soft White #F8FAFC
 - ❌ Cluttered interface
 - ❌ Too many colors
 - ❌ Slow animations (>500ms)
-- ❌ English-only
-- ❌ Ignoring RTL
+- ❌ English-only (must support French + Arabic)
+- ❌ Ignoring RTL (Arabic needs proper support)
+- ❌ No language switcher
 - ❌ Generic stock photos
 
 ---
@@ -142,7 +144,7 @@ Background: Soft White #F8FAFC
 Modern ride-hailing mobile app UI, clean minimalist design, 
 full-screen map interface with floating action button, 
 bottom sheet with pickup and dropoff location, 
-blue and amber color scheme, Arabic text, RTL layout, 
+blue and amber color scheme, French text interface, 
 professional and trustworthy feel, iOS design style, 
 high contrast, --ar 9:19
 ```
@@ -153,7 +155,7 @@ Mobile app earnings dashboard, large balance display showing
 850 TND with progress bar to 1000 TND threshold, 
 amber warning badge, transaction history list, 
 card-based layout, modern fintech UI style, 
-Arabic interface RTL, deep blue and amber colors, --ar 9:19
+French interface, deep blue and amber colors, --ar 9:19
 ```
 
 **Admin Deposit Approval**:
@@ -168,8 +170,8 @@ desktop layout, modern SaaS UI, --ar 16:9
 **Lock Warning Screen**:
 ```
 Mobile alert screen showing driver account locked at 1000 TND, 
-large lock icon, warning message in Arabic, 
-"Submit Deposit" call-to-action button, 
+large lock icon, warning message in French, 
+"Soumettre un dépôt" call-to-action button, 
 amber warning color, friendly but urgent tone, 
 modern app UI, centered content, --ar 9:19
 ```
@@ -208,7 +210,7 @@ Design is successful if:
 2. **Mobile Mockups** — 10-15 key screens per app
 3. **Admin Mockups** — 5-8 key screens
 4. **Assets** — Logo, app icons, illustrations
-5. **RTL Versions** — All screens in Arabic
+5. **Language Versions** — French (default) + Arabic (RTL) versions
 6. **Responsive** — Mobile/tablet/desktop for admin
 
 **Format**: Figma file preferred (for easy developer handoff)
