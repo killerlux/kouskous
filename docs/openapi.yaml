@@ -66,6 +66,48 @@ components:
         completed_at: { type: string, format: date-time, nullable: true }
         cancelled_at: { type: string, format: date-time, nullable: true }
         cancellation_reason: { type: string, nullable: true }
+    Vehicle:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/UUID' }
+        driver_id: { $ref: '#/components/schemas/UUID' }
+        plate_no: { type: string }
+        make: { type: string, nullable: true }
+        model: { type: string, nullable: true }
+        color: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+    Document:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/UUID' }
+        driver_id: { $ref: '#/components/schemas/UUID' }
+        kind: { type: string, enum: [license, carte_grise, assurance, photo_id] }
+        url: { type: string, format: uri }
+        status: { type: string, enum: [pending, approved, rejected] }
+        meta: { type: object }
+        created_at: { type: string, format: date-time }
+        reviewed_at: { type: string, format: date-time, nullable: true }
+        reviewed_by: { $ref: '#/components/schemas/UUID', nullable: true }
+    Deposit:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/UUID' }
+        driver_id: { $ref: '#/components/schemas/UUID' }
+        amount_cents: { type: integer, format: int64 }
+        receipt_url: { type: string, format: uri }
+        status: { type: string, enum: [submitted, approved, rejected] }
+        notes: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        decided_at: { type: string, format: date-time, nullable: true }
+        decided_by: { $ref: '#/components/schemas/UUID', nullable: true }
+    SocketAck:
+      type: object
+      required: [ok]
+      properties:
+        ok: { type: boolean }
+        error: { type: string, nullable: true }
+        data: { type: object, nullable: true }
+      description: Standard acknowledgment envelope for all Socket.IO events
 paths:
   /auth/verify-phone:
     post:
@@ -349,4 +391,51 @@ paths:
         '204': { description: Verification updated }
         '403':
           description: Not admin
+  /admin/deposits:
+    get:
+      security: [ { bearerAuth: [] } ]
+      summary: List pending deposits for review (admin)
+      tags: [Admin, Deposits]
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string, enum: [submitted, approved, rejected] }
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20 }
+      responses:
+        '200':
+          description: List of deposits
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Deposit' }
+                  total: { type: integer }
+                  page: { type: integer }
+                  limit: { type: integer }
+        '403':
+          description: Not admin
+  /health:
+    get:
+      summary: Health check endpoint
+      tags: [Health]
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  database: { type: string, enum: [up, down] }
+                  redis: { type: string, enum: [up, down] }
+                  uptime: { type: number }
 

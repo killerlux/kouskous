@@ -1,17 +1,18 @@
-# Test Plan — Taxi Platform (v1.0)
+# Test Plan — Taxi Platform (v1.1)
 
-_Last updated: 2025-11-14_
+_Last updated: 2025-11-15_  
+**Status**: Framework in place; comprehensive test suite in progress
 
 ## 1. Objectives
 - Guarantee ride lifecycle, dispatch, earnings lock, and deposit workflows behave as described in `/docs/ARCHITECTURE.md`.
 - Detect regressions early through automated tests (unit → integration → e2e).
-- Validate non-functional qualities: performance (dispatch p95 < 4 s), reliability, battery usage, GPS integrity.
+- Validate non-functional qualities: performance (dispatch p95 < 4 s), reliability, battery usage, GPS integrity.
 - Provide clear release gates and ownership for QA sign-off.
 
 ## 2. Test Pyramid & Coverage Goals
 | Layer              | Target Coverage / Scope                                                                                   | Tooling                                                                 |
-|--------------------|------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
-| Unit               | ≥80 % critical modules (backend services, Flutter blocs/providers)                                        | Jest (NestJS), Flutter test/golden, React Testing Library               |
+|--------------------|-----------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| Unit               | ≥80 % critical modules (backend services, Flutter blocs/providers)                                        | Jest (NestJS), Flutter test/golden, React Testing Library               |
 | Integration        | Core flows: auth, ride lifecycle, driver lock, socket flows                                                | Jest + Testcontainers (Postgres, Redis), Supertest, Socket.IO harness  |
 | End-to-end (E2E)   | Admin web happy paths, mobile ride lifecycle (client + driver)                                             | Playwright (admin), Flutter integration tests                          |
 | Non-functional     | Realtime load (1,000 concurrent drivers), failover drills, battery/GPS edge cases                          | k6, custom chaos scripts, Android/iOS profiler                          |
@@ -29,23 +30,29 @@ _Last updated: 2025-11-14_
 | Mobile driver              | State machines, location svc | Flutter integration: accept → deposit lock  | Battery-aware location, forced lock scenario                 |
 
 ## 4. Automation Details
+
 ### Backend (NestJS)
-- `apps/backend/test/**.spec.ts` for unit/integration (ts-jest).
-- `test:cov` enforces coverage thresholds (configured via Jest).
-- Integration uses `@testcontainers/postgresql` + `redis` to mirror production schema.
+- **Status**: [🚧 In Progress]
+- `apps/backend/test/rides.service.spec.ts` — **starter test created for RidesService**
+- `apps/backend/jest.config.ts` — **ts-jest configured**
+- Integration tests with Testcontainers — **TODO**
+- Coverage enforcement — **not yet configured in jest.config**
 
 ### Realtime
-- Socket harness under `apps/realtime/test/` simulates `/driver` + `/client` namespaces.
-- Load tests via `tests/load/k6/dispatch.js` (target 1k concurrent drivers, accept latency < 4 s).
+- **Status**: [ ] Not Started
+- Socket harness under `apps/realtime/test/` — **TODO**
+- Load tests via `tests/load/k6/dispatch.js` — **script skeleton exists, not functional**
 
 ### Flutter Apps
-- Unit & golden tests via `flutter test`.
-- Integration tests using `flutter test integration_test` with mocked backend (or staging env).
-- Battery/GPS scenarios executed with Android Emulator `adb shell dumpsys batterystats` and Xcode Instruments.
+- **Status**: [🚧 Scaffolds Only]
+- `apps/mobile_client/test/widget_test.dart` — **placeholder test**
+- `apps/mobile_driver/test/widget_test.dart` — **placeholder test**
+- Golden tests, integration tests, battery/GPS scenarios — **TODO**
 
 ### Admin (Next.js)
-- Component tests using React Testing Library.
-- Playwright E2E flows in `.github/workflows/ci.yml` (gated on staging env readiness).
+- **Status**: [ ] Not Started
+- Component tests using React Testing Library — **TODO**
+- Playwright E2E flows — **TODO**
 
 ## 5. Manual / Exploratory Checklists
 1. Driver onboarding verifying Tunisian license numbers (edge-case docs).
@@ -55,18 +62,18 @@ _Last updated: 2025-11-14_
 5. App store review checklist (test accounts, permission descriptions, demo video).
 
 ## 6. Non-Functional Testing
-- **Load / Soak**: `k6` script simulating 1,000 drivers + 500 concurrent riders for 10 min; ensure CPU < 70 %, memory < 75 %.
+- **Load / Soak**: `k6` script simulating 1,000 drivers + 500 concurrent riders for 10 min; ensure CPU < 70 %, memory < 75 %.
 - **Failover**: terminate realtime droplet → verify auto-reconnect + monitoring alert.
-- **Battery**: run driver app for 2 h route; ensure <15 % battery drain (baseline).
+- **Battery**: run driver app for 2 h route; ensure <15 % battery drain (baseline).
 - **Security**: run Trivy, npm audit, dependency review in CI; manual pen-test checklist (see `/docs/security.md`).
 
 ## 7. CI/CD Gates
-1. `pnpm lint` / `pnpm test` (backend, realtime, admin, shared) — required.
-2. Flutter unit tests — required.
-3. Playwright smoke suite (staging) — required before prod release.
-4. `k6` load test — nightly; must pass or escalate.
-5. Trivy scan (fs + images) — required.
-6. Testcontainers integration — required for backend modules touching DB.
+1. `pnpm lint` / `pnpm test` (backend, realtime, admin, shared) — **required; currently passing for backend**.
+2. Flutter unit tests — **required; placeholders exist**.
+3. Playwright smoke suite (staging) — **required before prod release; not set up yet**.
+4. `k6` load test — **nightly; must pass or escalate; not configured**.
+5. Trivy scan (fs + images) — **required; running in CI**.
+6. Testcontainers integration — **required for backend modules touching DB; not yet added**.
 
 ## 8. Release Readiness Checklist
 - ✅ All blocking bugs closed (severity P1/P2).
@@ -84,4 +91,3 @@ _Last updated: 2025-11-14_
 - Test plan maintenance: QA lead (updates w/ every major feature).
 
 > Keep this document updated alongside `/docs/ARCHITECTURE.md` for every meaningful change. PRs affecting workflows must include test plan adjustments.
-

@@ -1,5 +1,6 @@
-# Taxi Platform — Architecture v1.1 (Improved)  
-**Date**: 2025-01-14
+# Taxi Platform — Architecture v1.2  
+**Date**: 2025-11-15  
+**Status**: Foundation scaffolded; core features in progress
 
 > **Scope**: Ride-hailing for **Tunisian licensed taxis** only. **Cash-only**; when a driver's **earnings ≥ 1000 TND**, the system **locks availability** until a **La Poste deposit** receipt is uploaded and **approved by admin**.
 
@@ -98,17 +99,34 @@ Key endpoints:
 - Admin: `GET /admin/verification-queue`, `POST /admin/drivers/{id}/verify`
 
 ### Socket.IO Namespaces & Events
-- Namespaces: `/client`, `/driver`, `/admin`
-- Common envelope: every event acked with `{ ok: boolean, error?: string, data?: any }`
-- Client:
-  - `ride:request` → `{pickup, dropoff}` → ack(data: rideId)
-  - `ride:status` subscribe → push updates
-- Driver:
-  - `driver:location` → `{lat, lng, accuracy, speed, heading, ts}`
-  - `ride:offer` (server→driver) → `{rideId, pickup, est_fare}` → driver replies `ride:accept` or `ride:decline`
-  - `system:lock` when balance >= 1000 TND
-- Admin:
-  - `admin:monitor` stream; `deposit:decision` pushes
+
+**Common envelope**: every event acked with `{ ok: boolean, error?: string, data?: any }`
+
+#### Namespace: `/client`
+| Event | Direction | Payload | Ack/Response | Notes |
+|-------|-----------|---------|--------------|-------|
+| `ride:request` | client→server | `{pickup: GeoPoint, dropoff: GeoPoint, idempotency_key: string}` | `{ok, data: {rideId}}` | Idempotent; triggers dispatch |
+| `ride:status` | server→client | `{rideId, status: RideStatus, driver?: DriverInfo, eta_seconds?: number}` | (push) | Subscribe after request |
+| `ride:cancel` | client→server | `{rideId, reason?: string}` | `{ok}` | Only if ride not started |
+
+#### Namespace: `/driver`
+| Event | Direction | Payload | Ack/Response | Notes |
+|-------|-----------|---------|--------------|-------|
+| `driver:online` | driver→server | `{available: boolean, location: GeoPoint}` | `{ok}` | Toggle availability; rejected if locked |
+| `driver:location` | driver→server | `{lat, lng, accuracy, speed, heading, ts}` | `{ok}` | Server validates anti-spoof; throttle client-side |
+| `ride:offer` | server→driver | `{rideId, pickup: GeoPoint, dropoff: GeoPoint, est_fare_cents?: number, expires_at: timestamp}` | (push) | 20s timeout; driver must ack accept/decline |
+| `ride:accept` | driver→server | `{rideId}` | `{ok}` | Assigns ride; notifies client |
+| `ride:decline` | driver→server | `{rideId, reason?: string}` | `{ok}` | Retry dispatch to next driver |
+| `ride:arrived` | driver→server | `{rideId}` | `{ok}` | Status → driver_arrived |
+| `ride:start` | driver→server | `{rideId}` | `{ok}` | Status → started |
+| `ride:complete` | driver→server | `{rideId, price_cents: number}` | `{ok}` | Credits ledger; may trigger lock |
+| `system:lock` | server→driver | `{reason: 'earnings_threshold', balance_cents: number, required_deposit_cents: number}` | (push) | Forces offline; blocks accept |
+
+#### Namespace: `/admin`
+| Event | Direction | Payload | Ack/Response | Notes |
+|-------|-----------|---------|--------------|-------|
+| `admin:monitor` | admin→server | `{subscribe: ['rides', 'drivers', 'deposits']}` | (stream) | Real-time dashboard updates |
+| `deposit:decision` | server→admin | `{depositId, decision: 'approved'|'rejected', driver_id, amount_cents}` | (push) | Notify admin channel of decisions |
 
 **Dispatch v1**:
 - KNN search (PostGIS) within radius; tie-breaker by proximity then idle time.  
@@ -197,11 +215,45 @@ stateDiagram-v2
 
 ---
 
-## 10) Repo Contracts & Rules
+## 10) Implementation Status
+
+### ✅ Complete
+- Database schema (`schema.sql`) and migration (`1710000000000-InitialSchema.ts`)
+- Docker/Compose setup (dev + prod)
+- CI/CD workflows (lint, test, build, Docker, security scans)
+- Admin Dockerfile (pnpm workspace-aware)
+- Backend/realtime/admin/mobile scaffolds with placeholder modules
+- OpenAPI spec with core endpoints + new schemas (Vehicle, Document, Deposit)
+- Socket.IO event contracts documented
+
+### 🚧 In Progress
+- Backend services implementation (auth, rides, deposits still stubs)
+- Realtime dispatch logic (gateways exist but dispatch/GPS validation incomplete)
+- Admin UI features (verification, deposit approval, dashboards)
+- Flutter mobile features (auth, ride flows, earnings lock, GPS tracking)
+- SDK generation from OpenAPI
+
+### ⏳ TODO
+- Full RBAC implementation with role guards
+- Earnings lock enforcement + ledger credits
+- GPS anti-spoofing server-side validation
+- Receipt/document EXIF validation
+- Push notifications (FCM integration)
+- Comprehensive test coverage (unit/integration/e2e)
+- Observability stack (Prometheus/Grafana/Loki)
+- Load testing (k6 scripts)
+- Production deployment runbooks
+- SDK auto-generation pipeline
+
+---
+
+## 11) Repo Contracts & Rules
 
 Follow `.cursorrules` at repo root.
 
 Any API change must update OpenAPI + regenerate SDK `/packages/shared`.
 
 Critical flows must have tests before merge.
+
+**SDK Generation Note**: Currently manual; automation via `openapi-generator-cli` or similar to be added in `/packages/shared/scripts/generate-sdk.sh`.
 
