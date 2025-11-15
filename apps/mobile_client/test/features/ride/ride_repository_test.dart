@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile_client/src/features/ride/ride_repository.dart';
 import 'package:mobile_client/src/core/socket/socket_client.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class MockSocketClient extends Mock implements SocketClient {
   @override
@@ -10,6 +11,15 @@ class MockSocketClient extends Mock implements SocketClient {
 }
 
 void main() {
+  setUpAll(() async {
+    // Load test environment variables
+    dotenv.testLoad(fileInput: '''
+API_BASE_URL=http://localhost:4000
+SOCKET_URL=http://localhost:5000
+GOOGLE_MAPS_API_KEY=test_key
+''');
+  });
+
   group('RideRepository', () {
     late MockSocketClient mockSocket;
     late RideRepository repository;
