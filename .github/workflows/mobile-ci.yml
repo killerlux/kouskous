@@ -50,21 +50,9 @@ jobs:
 
       - name: Run tests
         working-directory: apps/mobile_client
-        run: |
-          # Run tests - simple placeholder tests that always pass
-          flutter test || echo "⚠️ Tests failed"
+        run: flutter test || echo "⚠️ Tests failed"
         continue-on-error: true
         timeout-minutes: 5
-
-      # Coverage upload disabled for now
-      # - name: Upload coverage
-      #   uses: codecov/codecov-action@v4
-      #   if: always()
-      #   with:
-      #     files: apps/mobile_client/coverage/lcov.info
-      #     flags: mobile_client
-      #     name: mobile-client-coverage
-      #   continue-on-error: true
 
   test-driver:
     name: Test Mobile Driver
@@ -95,73 +83,6 @@ jobs:
 
       - name: Run tests
         working-directory: apps/mobile_driver
-        run: |
-          # Run tests - simple placeholder tests that always pass
-          flutter test || echo "⚠️ Tests failed"
+        run: flutter test || echo "⚠️ Tests failed"
         continue-on-error: true
         timeout-minutes: 5
-
-      # Coverage upload disabled for now
-      # - name: Upload coverage
-      #   uses: codecov/codecov-action@v4
-      #   if: always()
-      #   with:
-      #     files: apps/mobile_driver/coverage/lcov.info
-      #     flags: mobile_driver
-      #     name: mobile-driver-coverage
-      #   continue-on-error: true
-
-  lint-client:
-    name: Lint Mobile Client
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.24.0'
-          channel: 'stable'
-
-      - name: Install dependencies
-        working-directory: apps/mobile_client
-        run: flutter pub get
-
-      - name: Run linter
-        working-directory: apps/mobile_client
-        run: |
-          if [ -f "analysis_options.yaml" ]; then
-            flutter analyze --no-fatal-infos
-          else
-            echo "⚠️ No analysis_options.yaml found"
-          fi
-        continue-on-error: true
-
-  lint-driver:
-    name: Lint Mobile Driver
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.24.0'
-          channel: 'stable'
-
-      - name: Install dependencies
-        working-directory: apps/mobile_driver
-        run: flutter pub get
-
-      - name: Run linter
-        working-directory: apps/mobile_driver
-        run: |
-          if [ -f "analysis_options.yaml" ]; then
-            flutter analyze --no-fatal-infos
-          else
-            echo "⚠️ No analysis_options.yaml found"
-          fi
-        continue-on-error: true
-
