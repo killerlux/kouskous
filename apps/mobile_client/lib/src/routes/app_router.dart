@@ -1,32 +1,28 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
-import '../features/auth/presentation/login_screen.dart';
+import '../features/auth/phone_login_screen.dart';
+import '../features/auth/otp_screen.dart';
 import '../features/home/presentation/home_screen.dart';
 
-final appRouterProvider = Provider<GoRouter>((ref) {
-  return GoRouter(
-    initialLocation: '/login',
-    routes: [
-      GoRoute(
-        path: '/login',
-        name: LoginScreen.routeName,
-        builder: (context, state) => const LoginScreen(),
-      ),
-      GoRoute(
-        path: '/home',
-        name: HomeScreen.routeName,
-        builder: (context, state) => const HomeScreen(),
-      ),
-    ],
-    errorBuilder: (context, state) => Scaffold(
-      body: Center(child: Text(state.error.toString())),
+final appRouter = GoRouter(
+  initialLocation: '/',
+  routes: [
+    GoRoute(
+      path: '/',
+      builder: (context, state) => const PhoneLoginScreen(),
     ),
-    redirect: (context, state) {
-      // TODO: Wire auth state from Riverpod.
-      return null;
-    },
-  );
-});
+    GoRoute(
+      path: '/otp',
+      builder: (context, state) => OtpScreen(
+        verificationId: state.extra as String,
+      ),
+    ),
+    GoRoute(
+      path: '/home',
+      builder: (context, state) => const HomeScreen(),
+    ),
+  ],
+  errorBuilder: (context, state) => Scaffold(
+    body: Center(child: Text(state.error.toString())),
+  ),
+);
 

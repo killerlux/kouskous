@@ -1,38 +1,35 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../features/auth/phone_login_screen.dart';
+import '../features/auth/otp_screen.dart';
+import '../features/dashboard/driver_dashboard_screen.dart';
+import '../features/ride/ride_controls.dart';
 
-import '../features/auth/presentation/phone_login_screen.dart';
-import '../features/earnings/presentation/earnings_lock_screen.dart';
-import '../features/presence/presentation/dashboard_screen.dart';
-
-final appRouterProvider = Provider<GoRouter>((ref) {
-  return GoRouter(
-    initialLocation: '/login',
-    routes: [
-      GoRoute(
-        path: '/login',
-        name: PhoneLoginScreen.routeName,
-        builder: (_, __) => const PhoneLoginScreen(),
-      ),
-      GoRoute(
-        path: '/dashboard',
-        name: DashboardScreen.routeName,
-        builder: (_, __) => const DashboardScreen(),
-      ),
-      GoRoute(
-        path: '/lock',
-        name: EarningsLockScreen.routeName,
-        builder: (_, __) => const EarningsLockScreen(),
-      ),
-    ],
-    errorBuilder: (_, state) => Scaffold(
-      body: Center(child: Text(state.error.toString())),
+final appRouter = GoRouter(
+  initialLocation: '/',
+  routes: [
+    GoRoute(
+      path: '/',
+      builder: (context, state) => const PhoneLoginScreen(),
     ),
-    redirect: (context, state) {
-      // TODO: add auth + earnings lock guards.
-      return null;
-    },
-  );
-});
+    GoRoute(
+      path: '/otp',
+      builder: (context, state) => OtpScreen(
+        verificationId: state.extra as String,
+      ),
+    ),
+    GoRoute(
+      path: '/dashboard',
+      builder: (context, state) => const DriverDashboardScreen(),
+    ),
+    GoRoute(
+      path: '/ride/:id',
+      builder: (context, state) => RideControls(
+        rideId: state.pathParameters['id']!,
+      ),
+    ),
+  ],
+  errorBuilder: (context, state) => Scaffold(
+    body: Center(child: Text(state.error.toString())),
+  ),
+);
 
