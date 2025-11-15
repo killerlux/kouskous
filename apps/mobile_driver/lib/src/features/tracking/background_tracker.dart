@@ -51,7 +51,7 @@ class BackgroundTracker {
 
     // Foreground service notification (Android) - skip on web
     try {
-      await FlutterForegroundTask.init(
+      FlutterForegroundTask.init(
         androidNotificationOptions: AndroidNotificationOptions(
           channelId: 'driver_tracking',
           channelName: 'Driver Tracking',
