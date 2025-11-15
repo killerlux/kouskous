@@ -1,5 +1,6 @@
 // apps/mobile_client/test/features/map/map_screen_test.dart
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/material.dart';
 import 'package:mobile_client/src/features/map/map_screen.dart';
 
 void main() {
