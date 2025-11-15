@@ -7,6 +7,8 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../core/socket/socket_client.dart';
 import '../../core/providers.dart';
 
+typedef Reader = T Function<T>(ProviderBase<T> provider);
+
 @pragma('vm:entry-point')
 void startCallback() {
   FlutterForegroundTask.setTaskHandler(_TrackerTaskHandler());
