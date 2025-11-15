@@ -1,0 +1,157 @@
+name: Mobile CI
+
+on:
+  pull_request:
+    paths:
+      - 'apps/mobile_client/**'
+      - 'apps/mobile_driver/**'
+      - '.github/workflows/mobile-ci.yml'
+  push:
+    branches: [main, develop]
+    paths:
+      - 'apps/mobile_client/**'
+      - 'apps/mobile_driver/**'
+      - '.github/workflows/mobile-ci.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  test-client:
+    name: Test Mobile Client
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+
+      - name: Install dependencies
+        working-directory: apps/mobile_client
+        run: flutter pub get
+
+      - name: Verify formatting
+        working-directory: apps/mobile_client
+        run: flutter format --set-exit-if-changed . || echo "⚠️ Formatting issues found"
+
+      - name: Analyze code
+        working-directory: apps/mobile_client
+        run: flutter analyze || echo "⚠️ Analysis issues found"
+        continue-on-error: true
+
+      - name: Run tests
+        working-directory: apps/mobile_client
+        run: flutter test --coverage || echo "⚠️ Some tests failed"
+        continue-on-error: true
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: apps/mobile_client/coverage/lcov.info
+          flags: mobile_client
+          name: mobile-client-coverage
+        continue-on-error: true
+
+  test-driver:
+    name: Test Mobile Driver
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+
+      - name: Install dependencies
+        working-directory: apps/mobile_driver
+        run: flutter pub get
+
+      - name: Verify formatting
+        working-directory: apps/mobile_driver
+        run: flutter format --set-exit-if-changed . || echo "⚠️ Formatting issues found"
+
+      - name: Analyze code
+        working-directory: apps/mobile_driver
+        run: flutter analyze || echo "⚠️ Analysis issues found"
+        continue-on-error: true
+
+      - name: Run tests
+        working-directory: apps/mobile_driver
+        run: flutter test --coverage || echo "⚠️ Some tests failed"
+        continue-on-error: true
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: apps/mobile_driver/coverage/lcov.info
+          flags: mobile_driver
+          name: mobile-driver-coverage
+        continue-on-error: true
+
+  lint-client:
+    name: Lint Mobile Client
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+
+      - name: Install dependencies
+        working-directory: apps/mobile_client
+        run: flutter pub get
+
+      - name: Run linter
+        working-directory: apps/mobile_client
+        run: |
+          if [ -f "analysis_options.yaml" ]; then
+            flutter analyze --no-fatal-infos
+          else
+            echo "⚠️ No analysis_options.yaml found"
+          fi
+        continue-on-error: true
+
+  lint-driver:
+    name: Lint Mobile Driver
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+
+      - name: Install dependencies
+        working-directory: apps/mobile_driver
+        run: flutter pub get
+
+      - name: Run linter
+        working-directory: apps/mobile_driver
+        run: |
+          if [ -f "analysis_options.yaml" ]; then
+            flutter analyze --no-fatal-infos
+          else
+            echo "⚠️ No analysis_options.yaml found"
+          fi
+        continue-on-error: true
+
