@@ -13,6 +13,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { DeviceTokensModule } from './modules/device-tokens/device-tokens.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { HealthModule } from './modules/health/health.module';
+import { AppInfoModule } from './modules/app/app.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { HealthModule } from './modules/health/health.module';
     DocumentsModule,
     AdminModule,
     HealthModule,
+    AppInfoModule,
   ],
   providers: [
     {
