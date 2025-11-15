@@ -55,8 +55,8 @@ jobs:
           mkdir -p . && echo "API_BASE_URL=http://localhost:4000" > .env
           echo "SOCKET_URL=http://localhost:5000" >> .env
           echo "GOOGLE_MAPS_API_KEY=test_key" >> .env
-          # Run tests with timeout
-          timeout 300 flutter test --coverage || echo "⚠️ Some tests failed"
+          # Run tests with timeout and allow failures for skipped tests
+          timeout 300 flutter test --coverage --reporter expanded || echo "⚠️ Some tests failed or were skipped"
         continue-on-error: true
         timeout-minutes: 10
 
@@ -103,8 +103,8 @@ jobs:
           mkdir -p . && echo "API_BASE_URL=http://localhost:4000" > .env
           echo "SOCKET_URL=http://localhost:5000" >> .env
           echo "GOOGLE_MAPS_API_KEY=test_key" >> .env
-          # Run tests with timeout
-          timeout 300 flutter test --coverage || echo "⚠️ Some tests failed"
+          # Run tests with timeout and allow failures for skipped tests
+          timeout 300 flutter test --coverage --reporter expanded || echo "⚠️ Some tests failed or were skipped"
         continue-on-error: true
         timeout-minutes: 10
 
