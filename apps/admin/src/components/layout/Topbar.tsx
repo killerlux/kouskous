@@ -2,7 +2,9 @@
 'use client';
 
 import { Bell, Search } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/Input';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 interface TopbarProps {
   title: string;
@@ -10,6 +12,8 @@ interface TopbarProps {
 }
 
 export const Topbar: React.FC<TopbarProps> = ({ title, subtitle }) => {
+  const t = useTranslations('common');
+
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
       <div className="flex items-center justify-between px-8 py-4">
@@ -25,10 +29,13 @@ export const Topbar: React.FC<TopbarProps> = ({ title, subtitle }) => {
           <div className="w-64">
             <Input
               type="search"
-              placeholder="Rechercher..."
+              placeholder={t('search')}
               leftIcon={<Search className="w-4 h-4" />}
             />
           </div>
+
+          {/* Language Switcher */}
+          <LanguageSwitcher />
 
           {/* Notifications */}
           <button className="relative p-2 text-gray-600 hover:text-primary hover:bg-gray-100 rounded-lg transition-colors">

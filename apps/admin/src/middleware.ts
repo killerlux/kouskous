@@ -1,11 +1,23 @@
 // apps/admin/src/middleware.ts
+import createMiddleware from 'next-intl/middleware';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { locales, defaultLocale } from '../i18n';
+
+// Create i18n middleware
+const intlMiddleware = createMiddleware({
+  locales,
+  defaultLocale,
+  localePrefix: 'always',
+});
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Get auth token from cookies or localStorage (check via header)
+  // Apply i18n middleware first
+  const intlResponse = intlMiddleware(request);
+
+  // Get auth token from cookies
   const authStorage = request.cookies.get('auth-storage')?.value;
 
   let isAuthenticated = false;
@@ -21,13 +33,19 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Public routes
+  // Check if the route is locale-prefixed
+  const pathnameWithoutLocale = pathname.replace(/^\/[a-z]{2}/, '');
+
+  // Public routes (without locale prefix)
   const publicRoutes = ['/login'];
-  const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
+  const isPublicRoute = publicRoutes.some((route) =>
+    pathnameWithoutLocale.startsWith(route)
+  );
 
   // If not authenticated and trying to access protected route
-  if (!isAuthenticated && !isPublicRoute) {
-    const loginUrl = new URL('/login', request.url);
+  if (!isAuthenticated && !isPublicRoute && pathnameWithoutLocale !== '/') {
+    const locale = pathname.split('/')[1];
+    const loginUrl = new URL(`/${locale}/login`, request.url);
     return NextResponse.redirect(loginUrl);
   }
 
@@ -40,12 +58,13 @@ export function middleware(request: NextRequest) {
   }
 
   // If authenticated and trying to access login page, redirect to dashboard
-  if (isAuthenticated && isAdmin && pathname === '/login') {
-    const dashboardUrl = new URL('/dashboard', request.url);
+  if (isAuthenticated && isAdmin && pathnameWithoutLocale === '/login') {
+    const locale = pathname.split('/')[1];
+    const dashboardUrl = new URL(`/${locale}/dashboard`, request.url);
     return NextResponse.redirect(dashboardUrl);
   }
 
-  return NextResponse.next();
+  return intlResponse;
 }
 
 export const config = {
