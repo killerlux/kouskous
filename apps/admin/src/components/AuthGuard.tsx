@@ -1,15 +1,27 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, isAdmin, user } = useAuthStore();
+  const { isAuthenticated, isAdmin } = useAuthStore();
+  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
+    // Wait for Zustand to hydrate from localStorage
+    const timer = setTimeout(() => {
+      setIsChecking(false);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (isChecking) return;
+
     // Extract locale from pathname
     const locale = pathname.split('/')[1] || 'fr';
 
@@ -24,13 +36,14 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       router.push(`/${locale}/login`);
       return;
     }
-  }, [isAuthenticated, isAdmin, pathname, router]);
+  }, [isAuthenticated, isAdmin, pathname, router, isChecking]);
 
-  // Show loading or nothing while checking
-  if (!isAuthenticated || !isAdmin) {
+  // Show loading while checking or if not authenticated
+  if (isChecking || !isAuthenticated || !isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-700 mx-auto mb-4"></div>
           <p className="text-gray-600">Vérification de l'authentification...</p>
         </div>
       </div>

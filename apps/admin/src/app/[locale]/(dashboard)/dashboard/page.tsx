@@ -27,17 +27,24 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const fetchStats = async () => {
+      setIsLoading(true);
       try {
         const response = await api.getDashboardStats();
-        setStats(response.data.data);
+        // API returns { data: { activeDrivers, pendingDeposits, ... } }
+        if (response.data?.data) {
+          setStats(response.data.data);
+        } else if (response.data) {
+          // Fallback if structure is different
+          setStats(response.data);
+        }
       } catch (error) {
         console.error('Failed to fetch dashboard stats:', error);
-        // Use mock data for now
+        // Don't use mock data - show zeros instead
         setStats({
-          activeDrivers: 47,
-          pendingDeposits: 8,
-          totalRidesToday: 234,
-          totalRevenue: 12450000, // in cents
+          activeDrivers: 0,
+          pendingDeposits: 0,
+          totalRidesToday: 0,
+          totalRevenue: 0,
         });
       } finally {
         setIsLoading(false);
@@ -95,65 +102,58 @@ export default function DashboardPage() {
         subtitle="Vue d'ensemble de la plateforme"
       />
       <main className="p-8">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {statCards.map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <Card key={stat.title} variant="elevated">
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i} variant="elevated">
                 <CardContent className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 mb-2">{stat.title}</p>
-                    <p className="text-3xl font-bold text-gray-900">
-                      {stat.isMonetary ? stat.value : stat.value}
-                    </p>
-                    {stat.badge && (
-                      <Badge variant={stat.badge} className="mt-2">
-                        Action requise
-                      </Badge>
-                    )}
+                  <div className="flex-1">
+                    <div className="h-4 bg-gray-200 rounded w-24 mb-4 animate-pulse"></div>
+                    <div className="h-8 bg-gray-200 rounded w-16 animate-pulse"></div>
                   </div>
-                  <div className={`p-3 rounded-lg ${stat.bgColor}`}>
-                    <Icon className={`w-6 h-6 ${stat.color}`} />
-                  </div>
+                  <div className="w-12 h-12 bg-gray-200 rounded-lg animate-pulse"></div>
                 </CardContent>
               </Card>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {statCards.map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <Card key={stat.title} variant="elevated">
+                  <CardContent className="flex items-start justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600 mb-2">{stat.title}</p>
+                      <p className="text-3xl font-bold text-gray-900">
+                        {stat.isMonetary ? stat.value : stat.value}
+                      </p>
+                      {stat.badge && (
+                        <Badge variant={stat.badge} className="mt-2">
+                          Action requise
+                        </Badge>
+                      )}
+                    </div>
+                    <div className={`p-3 rounded-lg ${stat.bgColor}`}>
+                      <Icon className={`w-6 h-6 ${stat.color}`} />
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
 
         {/* Recent Activity */}
         <Card>
           <CardHeader title="Activité récente" />
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                <div>
-                  <p className="font-medium text-gray-900">Nouveau dépôt</p>
-                  <p className="text-sm text-gray-500">Chauffeur #12345 - 1,200 TND</p>
-                </div>
-                <Badge variant="warning" dot>
-                  En attente
-                </Badge>
-              </div>
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                <div>
-                  <p className="font-medium text-gray-900">Vérification complétée</p>
-                  <p className="text-sm text-gray-500">Chauffeur #12344</p>
-                </div>
-                <Badge variant="success" dot>
-                  Approuvé
-                </Badge>
-              </div>
-              <div className="flex items-center justify-between py-3">
-                <div>
-                  <p className="font-medium text-gray-900">Nouveau chauffeur</p>
-                  <p className="text-sm text-gray-500">Inscription #98765</p>
-                </div>
-                <Badge variant="info" dot>
-                  Nouveau
-                </Badge>
-              </div>
+            <div className="text-center py-12">
+              <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">Aucune activité récente</p>
+              <p className="text-sm text-gray-400 mt-2">
+                Les activités récentes apparaîtront ici
+              </p>
             </div>
           </CardContent>
         </Card>

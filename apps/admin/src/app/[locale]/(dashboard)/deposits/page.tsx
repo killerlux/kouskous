@@ -36,25 +36,8 @@ export default function DepositsPage() {
       setDeposits(deposits);
     } catch (error) {
       console.error('Failed to fetch deposits:', error);
-      // Mock data for development
-      setDeposits([
-        {
-          id: '1',
-          driver_id: 'driver-001',
-          amount_cents: 120000,
-          receipt_url: 'https://via.placeholder.com/800x600?text=Receipt+1',
-          status: DepositStatusEnum.Submitted,
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: '2',
-          driver_id: 'driver-002',
-          amount_cents: 100000,
-          receipt_url: 'https://via.placeholder.com/800x600?text=Receipt+2',
-          status: DepositStatusEnum.Submitted,
-          created_at: new Date(Date.now() - 3600000).toISOString(),
-        },
-      ]);
+      // Don't use mock data - show empty state instead
+      setDeposits([]);
     } finally {
       setIsLoading(false);
     }
