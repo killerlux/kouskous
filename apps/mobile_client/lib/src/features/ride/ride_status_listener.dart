@@ -18,11 +18,16 @@ class _RideStatusListenerState extends ConsumerState<RideStatusListener> {
   @override
   void initState() {
     super.initState();
-    final sc = ref.read(socketProvider(SocketNamespace.client));
-    sc.connect().then((_) {
-      sc.socket.on('ride:status', (data) {
-        setState(() {
-          status = data?['status'] ?? 'unknown';
+    // Use WidgetsBinding to ensure ref is available
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final sc = ref.read(socketProvider(SocketNamespace.client));
+      sc.connect().then((_) {
+        sc.socket.on('ride:status', (data) {
+          if (mounted) {
+            setState(() {
+              status = data?['status'] ?? 'unknown';
+            });
+          }
         });
       });
     });

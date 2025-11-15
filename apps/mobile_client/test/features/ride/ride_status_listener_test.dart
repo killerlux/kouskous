@@ -17,6 +17,9 @@ void main() {
         ),
       );
 
+      // Wait for post-frame callback to execute
+      await tester.pump();
+
       expect(find.textContaining('Ride status:'), findsOneWidget);
     });
   });

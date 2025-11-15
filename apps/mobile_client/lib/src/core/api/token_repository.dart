@@ -8,7 +8,9 @@ class TokenRepository {
   final Dio http;
 
   TokenRepository(this.store)
-      : http = Dio(BaseOptions(baseUrl: dotenv.env['API_BASE_URL']!));
+      : http = Dio(BaseOptions(
+          baseUrl: dotenv.env['API_BASE_URL'] ?? 'http://localhost:4000',
+        ));
 
   Future<String?> refresh() async {
     final rt = await store.refresh;

@@ -12,6 +12,9 @@ void main() {
       ),
     );
 
+    // Wait for initial frame
+    await tester.pump();
+
     // Verify that the app renders
     expect(find.byType(TaxiClientApp), findsOneWidget);
   });
