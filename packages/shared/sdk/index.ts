@@ -42,7 +42,7 @@ export {
 } from './generated/api';
 
 // Export configuration
-export { Configuration, ConfigurationParameters } from './generated/configuration';
+export { Configuration } from './generated/configuration';
 
 // Export common types
 export * from './generated/common';
