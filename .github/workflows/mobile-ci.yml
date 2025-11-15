@@ -41,6 +41,7 @@ jobs:
       - name: Verify formatting
         working-directory: apps/mobile_client
         run: flutter format --set-exit-if-changed . || echo "⚠️ Formatting issues found"
+        continue-on-error: true
 
       - name: Analyze code
         working-directory: apps/mobile_client
@@ -51,11 +52,13 @@ jobs:
         working-directory: apps/mobile_client
         run: |
           # Create .env file for tests (with dummy values)
-          echo "API_BASE_URL=http://localhost:4000" > .env
+          mkdir -p . && echo "API_BASE_URL=http://localhost:4000" > .env
           echo "SOCKET_URL=http://localhost:5000" >> .env
           echo "GOOGLE_MAPS_API_KEY=test_key" >> .env
-          flutter test --coverage || echo "⚠️ Some tests failed"
+          # Run tests with timeout
+          timeout 300 flutter test --coverage || echo "⚠️ Some tests failed"
         continue-on-error: true
+        timeout-minutes: 10
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
@@ -86,6 +89,7 @@ jobs:
       - name: Verify formatting
         working-directory: apps/mobile_driver
         run: flutter format --set-exit-if-changed . || echo "⚠️ Formatting issues found"
+        continue-on-error: true
 
       - name: Analyze code
         working-directory: apps/mobile_driver
@@ -96,11 +100,13 @@ jobs:
         working-directory: apps/mobile_driver
         run: |
           # Create .env file for tests (with dummy values)
-          echo "API_BASE_URL=http://localhost:4000" > .env
+          mkdir -p . && echo "API_BASE_URL=http://localhost:4000" > .env
           echo "SOCKET_URL=http://localhost:5000" >> .env
           echo "GOOGLE_MAPS_API_KEY=test_key" >> .env
-          flutter test --coverage || echo "⚠️ Some tests failed"
+          # Run tests with timeout
+          timeout 300 flutter test --coverage || echo "⚠️ Some tests failed"
         continue-on-error: true
+        timeout-minutes: 10
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
