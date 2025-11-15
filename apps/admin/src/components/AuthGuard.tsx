@@ -7,7 +7,7 @@ import { useAuthStore } from '@/stores/authStore';
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, isAdmin, user } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const isAdminUser = user?.role === 'admin';
   const [isChecking, setIsChecking] = useState(true);
 
