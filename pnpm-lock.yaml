@@ -82,8 +82,8 @@ importers:
         specifier: ^10.3.0
         version: 10.4.20(@nestjs/common@10.4.20)(@nestjs/platform-express@10.4.20)(reflect-metadata@0.1.14)(rxjs@7.8.2)
       '@nestjs/jwt':
-        specifier: ^10.2.0
-        version: 10.2.0(@nestjs/common@10.4.20)
+        specifier: ^11.0.1
+        version: 11.0.1(@nestjs/common@10.4.20)
       '@nestjs/passport':
         specifier: ^10.0.3
         version: 10.0.3(@nestjs/common@10.4.20)(passport@0.7.0)
@@ -1456,13 +1456,13 @@ packages:
       uid: 2.0.2
     dev: true
 
-  /@nestjs/jwt@10.2.0(@nestjs/common@10.4.20):
-    resolution: {integrity: sha512-x8cG90SURkEiLOehNaN2aRlotxT0KZESUliOPKKnjWiyJOcWurkF3w345WOX0P4MgFzUjGoZ1Sy0aZnxeihT0g==}
+  /@nestjs/jwt@11.0.1(@nestjs/common@10.4.20):
+    resolution: {integrity: sha512-HXSsc7SAnCnjA98TsZqrE7trGtHDnYXWp4Ffy6LwSmck1QvbGYdMzBquXofX5l6tIRpeY4Qidl2Ti2CVG77Pdw==}
     peerDependencies:
-      '@nestjs/common': ^8.0.0 || ^9.0.0 || ^10.0.0
+      '@nestjs/common': ^8.0.0 || ^9.0.0 || ^10.0.0 || ^11.0.0
     dependencies:
       '@nestjs/common': 10.4.20(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.1.14)(rxjs@7.8.2)
-      '@types/jsonwebtoken': 9.0.5
+      '@types/jsonwebtoken': 9.0.10
       jsonwebtoken: 9.0.2
     dev: false
 
@@ -2304,12 +2304,6 @@ packages:
     dependencies:
       '@types/ms': 2.1.0
       '@types/node': 20.19.25
-
-  /@types/jsonwebtoken@9.0.5:
-    resolution: {integrity: sha512-VRLSGzik+Unrup6BsouBeHsf4d1hOEgYWTm/7Nmw1sXoN1+tRly/Gy/po3yeahnP4jfnQWWAhQAqcNfH7ngOkA==}
-    dependencies:
-      '@types/node': 20.19.25
-    dev: false
 
   /@types/long@4.0.2:
     resolution: {integrity: sha512-MqTGEo5bj5t157U6fA/BiDynNkn0YknVdh48CMPkTSpFTVmvao5UQmm7uEF6xBEo7qIMAlY/JSleYaE6VOdpaA==}
