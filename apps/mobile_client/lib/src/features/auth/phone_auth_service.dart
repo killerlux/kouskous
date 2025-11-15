@@ -38,7 +38,9 @@ class PhoneAuthService {
     );
     await _auth.signInWithCredential(cred);
     final idToken = await _auth.currentUser?.getIdToken();
-    final http = Dio(BaseOptions(baseUrl: dotenv.env['API_BASE_URL']!));
+    final http = Dio(BaseOptions(
+      baseUrl: dotenv.env['API_BASE_URL'] ?? 'http://localhost:4000',
+    ));
     final res = await http.post('/auth/exchange-token', data: {
       'firebase_id_token': idToken,
     });
