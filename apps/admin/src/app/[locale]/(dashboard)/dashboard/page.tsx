@@ -47,7 +47,15 @@ export default function DashboardPage() {
     fetchStats();
   }, []);
 
-  const statCards = [
+  const statCards: Array<{
+    title: string;
+    value: number | string;
+    icon: typeof Car;
+    color: string;
+    bgColor: string;
+    badge?: 'success' | 'warning' | 'error' | 'info' | 'neutral';
+    isMonetary?: boolean;
+  }> = [
     {
       title: 'Chauffeurs actifs',
       value: stats.activeDrivers,

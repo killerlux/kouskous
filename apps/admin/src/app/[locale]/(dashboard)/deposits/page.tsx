@@ -11,18 +11,8 @@ import { Input } from '@/components/ui/Input';
 import { Topbar } from '@/components/layout/Topbar';
 import { api } from '@/lib/api';
 import { formatCurrency, formatDate } from '@/lib/utils';
-
-interface Deposit {
-  id: string;
-  driver_id: string;
-  amount_cents: number;
-  receipt_url: string;
-  status: 'pending' | 'approved' | 'rejected';
-  notes?: string;
-  created_at: string;
-  decided_at?: string;
-  decided_by?: string;
-}
+import type { Deposit } from '@taxi/shared/sdk/generated/models';
+import { DepositStatusEnum } from '@taxi/shared/sdk/generated/models';
 
 export default function DepositsPage() {
   const [deposits, setDeposits] = useState<Deposit[]>([]);
@@ -41,7 +31,9 @@ export default function DepositsPage() {
     setIsLoading(true);
     try {
       const response = await api.getPendingDeposits();
-      setDeposits(response.data.data || []);
+      // SDK returns AxiosPromise, so response.data contains the actual response
+      const deposits = (response.data.items || []).filter((d): d is Deposit => d.id !== undefined && d.driver_id !== undefined);
+      setDeposits(deposits);
     } catch (error) {
       console.error('Failed to fetch deposits:', error);
       // Mock data for development
@@ -51,7 +43,7 @@ export default function DepositsPage() {
           driver_id: 'driver-001',
           amount_cents: 120000,
           receipt_url: 'https://via.placeholder.com/800x600?text=Receipt+1',
-          status: 'pending',
+          status: DepositStatusEnum.Submitted,
           created_at: new Date().toISOString(),
         },
         {
@@ -59,7 +51,7 @@ export default function DepositsPage() {
           driver_id: 'driver-002',
           amount_cents: 100000,
           receipt_url: 'https://via.placeholder.com/800x600?text=Receipt+2',
-          status: 'pending',
+          status: DepositStatusEnum.Submitted,
           created_at: new Date(Date.now() - 3600000).toISOString(),
         },
       ]);
@@ -76,7 +68,7 @@ export default function DepositsPage() {
   };
 
   const handleApprove = async () => {
-    if (!selectedDeposit) return;
+    if (!selectedDeposit || !selectedDeposit.id) return;
 
     setIsSubmitting(true);
     try {
@@ -87,14 +79,14 @@ export default function DepositsPage() {
       setSelectedDeposit(null);
     } catch (error) {
       console.error('Failed to approve deposit:', error);
-      alert('Erreur lors de l\'approbation du dépôt');
+      alert('Erreur lors de l&apos;approbation du dépôt');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleReject = async () => {
-    if (!selectedDeposit || !notes.trim()) {
+    if (!selectedDeposit || !selectedDeposit.id || !notes.trim()) {
       alert('Veuillez fournir une raison pour le rejet');
       return;
     }
@@ -165,20 +157,23 @@ export default function DepositsPage() {
                     {deposits.map((deposit) => (
                       <tr key={deposit.id} className="hover:bg-gray-50">
                         <td className="px-4 py-4 text-sm text-gray-900 font-mono">
-                          #{deposit.id.slice(0, 8)}
+                          #{deposit.id?.slice(0, 8) || 'N/A'}
                         </td>
                         <td className="px-4 py-4 text-sm text-gray-900">
-                          {deposit.driver_id}
+                          {deposit.driver_id || 'N/A'}
                         </td>
                         <td className="px-4 py-4 text-sm font-semibold text-gray-900">
-                          {formatCurrency(deposit.amount_cents)}
+                          {formatCurrency(deposit.amount_cents || 0)}
                         </td>
                         <td className="px-4 py-4 text-sm text-gray-600">
-                          {formatDate(deposit.created_at)}
+                          {deposit.created_at ? formatDate(deposit.created_at) : 'N/A'}
                         </td>
                         <td className="px-4 py-4">
-                          <Badge variant="warning" dot>
-                            En attente
+                          <Badge 
+                            variant={deposit.status === DepositStatusEnum.Submitted ? 'warning' : deposit.status === DepositStatusEnum.Approved ? 'success' : 'error'} 
+                            dot
+                          >
+                            {deposit.status === DepositStatusEnum.Submitted ? 'En attente' : deposit.status === DepositStatusEnum.Approved ? 'Approuvé' : 'Rejeté'}
                           </Badge>
                         </td>
                         <td className="px-4 py-4 text-right">
@@ -250,7 +245,7 @@ export default function DepositsPage() {
                   isLoading={isSubmitting}
                   onClick={handleApprove}
                 >
-                  Confirmer l'approbation
+                  Confirmer l&apos;approbation
                 </Button>
               </>
             ) : (
@@ -279,22 +274,22 @@ export default function DepositsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-gray-600">ID du dépôt</p>
-                  <p className="font-mono font-semibold">#{selectedDeposit.id}</p>
+                  <p className="font-mono font-semibold">#{selectedDeposit.id || 'N/A'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Chauffeur</p>
-                  <p className="font-semibold">{selectedDeposit.driver_id}</p>
+                  <p className="font-semibold">{selectedDeposit.driver_id || 'N/A'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Montant</p>
                   <p className="font-semibold text-lg">
-                    {formatCurrency(selectedDeposit.amount_cents)}
+                    {formatCurrency(selectedDeposit.amount_cents || 0)}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Date de soumission</p>
                   <p className="font-semibold">
-                    {formatDate(selectedDeposit.created_at)}
+                    {selectedDeposit.created_at ? formatDate(selectedDeposit.created_at) : 'N/A'}
                   </p>
                 </div>
               </div>
@@ -304,7 +299,7 @@ export default function DepositsPage() {
                 <p className="text-sm text-gray-600 mb-2">Reçu La Poste</p>
                 <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
                   <img
-                    src={selectedDeposit.receipt_url}
+                    src={selectedDeposit.receipt_url || 'https://via.placeholder.com/800x600?text=No+Receipt'}
                     alt="Reçu"
                     className="w-full h-auto"
                   />
@@ -329,7 +324,7 @@ export default function DepositsPage() {
             <div className="space-y-4">
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <h4 className="font-semibold text-green-900 mb-2">
-                  Confirmer l'approbation
+                  Confirmer l&apos;approbation
                 </h4>
                 <p className="text-sm text-green-800">
                   Le chauffeur sera débloqué et pourra accepter de nouvelles courses.

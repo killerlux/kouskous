@@ -36,9 +36,10 @@ export default function LoginPage() {
 
       await api.verifyPhone(phone);
       setStep('otp');
-    } catch (err: any) {
+    } catch (err) {
+      const error = err as { response?: { data?: { error?: string } } };
       setError(
-        err.response?.data?.error || 'Erreur lors de l\'envoi du code. Réessayez.'
+        error.response?.data?.error || 'Erreur lors de l\'envoi du code. Réessayez.'
       );
     } finally {
       setIsLoading(false);
@@ -52,24 +53,41 @@ export default function LoginPage() {
 
     try {
       const response = await api.exchangeToken(phone, otp);
-      const { accessToken, refreshToken, user } = response.data.data;
+      // SDK returns: { access_token, refresh_token, expires_in }
+      const { access_token, refresh_token } = response.data;
 
-      // Check if user is admin
-      if (user.role !== 'admin') {
+      // Store tokens first
+      setTokens(access_token || '', refresh_token || '');
+
+      // Fetch user data
+      const userResponse = await api.getMe();
+      const sdkUser = userResponse.data;
+
+      // Check if user exists and is admin
+      if (!sdkUser.id || !sdkUser.phone_e164 || sdkUser.role !== 'admin') {
         setError('Accès refusé. Seuls les administrateurs peuvent se connecter.');
         setIsLoading(false);
+        useAuthStore.getState().logout();
         return;
       }
 
-      // Store tokens and user
-      setTokens(accessToken, refreshToken);
+      // Map SDK user to our User type
+      const user = {
+        id: sdkUser.id,
+        phone_e164: sdkUser.phone_e164,
+        role: sdkUser.role as 'admin' | 'driver' | 'rider',
+        display_name: sdkUser.display_name ?? undefined,
+      };
+
+      // Store user
       setUser(user);
 
       // Redirect to dashboard
       router.push('/dashboard');
-    } catch (err: any) {
+    } catch (err) {
+      const error = err as { response?: { data?: { error?: string } } };
       setError(
-        err.response?.data?.error || 'Code OTP invalide. Réessayez.'
+        error.response?.data?.error || 'Code OTP invalide. Réessayez.'
       );
     } finally {
       setIsLoading(false);

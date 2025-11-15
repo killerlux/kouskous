@@ -5,12 +5,12 @@ import {
   AuthApi,
   UsersApi,
   AdminApi,
-  DepositsApi,
 } from '@taxi/shared/sdk';
+import { AdminDepositsGetStatusEnum } from '@taxi/shared/sdk/generated/api';
 import { useAuthStore } from '@/stores/authStore';
 
 // Base API URL from environment
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
 // Create axios instance for interceptors
 export const apiClient = axios.create({
@@ -92,27 +92,26 @@ const sdkConfig = new Configuration({
 const authApi = new AuthApi(sdkConfig, API_BASE_URL, apiClient);
 const usersApi = new UsersApi(sdkConfig, API_BASE_URL, apiClient);
 const adminApi = new AdminApi(sdkConfig, API_BASE_URL, apiClient);
-const depositsApi = new DepositsApi(sdkConfig, API_BASE_URL, apiClient);
+// depositsApi available for future use
+// const depositsApi = new DepositsApi(sdkConfig, API_BASE_URL, apiClient);
 
 // Export SDK-based API
 export const api = {
   // Auth
   verifyPhone: (phone: string) =>
-    authApi.authVerifyPhonePost({ authVerifyPhonePostRequest: { phone_e164: phone } }),
+    authApi.authVerifyPhonePost({ phone_e164: phone }),
 
   exchangeToken: (phone: string, otp: string) =>
-    authApi.authExchangeTokenPost({
-      authExchangeTokenPostRequest: { phone_e164: phone, otp_code: otp },
-    }),
+    authApi.authExchangeTokenPost({ phone_e164: phone, otp_code: otp }),
 
   // User
   getMe: () => usersApi.usersMeGet(),
 
   // Admin - Deposits
   getPendingDeposits: (page = 1, limit = 20) =>
-    adminApi.adminDepositsGet({ page, limit, status: 'pending' }),
+    adminApi.adminDepositsGet(AdminDepositsGetStatusEnum.Submitted, page, limit),
 
-  getDeposit: (id: string) => adminApi.adminDepositsIdGet({ id }),
+  getDeposit: (id: string) => apiClient.get(`/admin/deposits/${id}`),
 
   approveDeposit: (id: string, notes?: string) =>
     apiClient.post(`/admin/deposits/${id}/approve`, { notes }),

@@ -16,7 +16,13 @@
 
 export * from './api/admin-api';
 export * from './api/auth-api';
-export * from './api/deposits-api';
+// Export deposits-api but exclude AdminDepositsGetStatusEnum (already exported from admin-api)
+export {
+  DepositsApi,
+  DepositsApiFactory,
+  DepositsApiFp,
+  DepositsApiAxiosParamCreator,
+} from './api/deposits-api';
 export * from './api/drivers-api';
 export * from './api/health-api';
 export * from './api/rides-api';

@@ -9,6 +9,9 @@
     "generate": "pnpm run generate:types && pnpm run generate:sdk",
     "build": "pnpm run generate"
   },
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
   "keywords": [],
   "author": "",
   "license": "MIT"
