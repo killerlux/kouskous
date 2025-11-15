@@ -24,9 +24,15 @@ export class Ride {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column('uuid')
+  rider_user_id: string;
+
   @ManyToOne(() => User, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'rider_user_id' })
   rider_user: User;
+
+  @Column({ type: 'uuid', nullable: true })
+  driver_id?: string;
 
   @ManyToOne(() => Driver, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'driver_id' })
