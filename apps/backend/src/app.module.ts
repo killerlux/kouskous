@@ -11,6 +11,7 @@ import { DepositsModule } from './modules/deposits/deposits.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { DeviceTokensModule } from './modules/device-tokens/device-tokens.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { HealthModule } from './modules/health/health.module';
 
 @Module({
@@ -48,6 +49,7 @@ import { HealthModule } from './modules/health/health.module';
     EarningsModule,
     DepositsModule,
     DocumentsModule,
+    AdminModule,
     HealthModule,
   ],
   providers: [
