@@ -4,10 +4,12 @@ import { Repository } from 'typeorm';
 import { BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { RidesService } from '../src/modules/rides/rides.service';
 import { Ride } from '../src/modules/rides/ride.entity';
+import { EarningsService } from '../src/modules/earnings/earnings.service';
 
 describe('RidesService (Full Implementation)', () => {
   let service: RidesService;
   let repository: jest.Mocked<Repository<Ride>>;
+  let earningsService: jest.Mocked<any>;
 
   const mockUserId = '123e4567-e89b-12d3-a456-426614174000';
   const mockDriverId = '223e4567-e89b-12d3-a456-426614174000';
@@ -45,11 +47,18 @@ describe('RidesService (Full Implementation)', () => {
             createQueryBuilder: jest.fn(),
           },
         },
+        {
+          provide: EarningsService,
+          useValue: {
+            creditRide: jest.fn().mockResolvedValue(undefined),
+          },
+        },
       ],
     }).compile();
 
     service = module.get<RidesService>(RidesService);
     repository = module.get(getRepositoryToken(Ride));
+    earningsService = module.get(EarningsService);
   });
 
   it('should be defined', () => {
@@ -194,6 +203,7 @@ describe('RidesService (Full Implementation)', () => {
       expect(result.status).toBe('completed');
       expect(result.price_cents).toBe(5000);
       expect(result.completed_at).toBeDefined();
+      expect(earningsService.creditRide).toHaveBeenCalledWith(mockDriverId, mockRideId, 5000);
     });
 
     it('should reject negative price', async () => {

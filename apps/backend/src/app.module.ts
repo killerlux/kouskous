@@ -6,6 +6,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { UsersModule } from './modules/users/users.module';
 import { DriversModule } from './modules/drivers/drivers.module';
 import { RidesModule } from './modules/rides/rides.module';
+import { EarningsModule } from './modules/earnings/earnings.module';
 import { DepositsModule } from './modules/deposits/deposits.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -44,6 +45,7 @@ import { HealthModule } from './modules/health/health.module';
     DeviceTokensModule,
     DriversModule,
     RidesModule,
+    EarningsModule,
     DepositsModule,
     DocumentsModule,
     HealthModule,

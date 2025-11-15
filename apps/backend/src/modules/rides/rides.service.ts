@@ -4,10 +4,13 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Ride } from './ride.entity';
+import { EarningsService } from '../earnings/earnings.service';
 
 interface GeoPoint {
   lat: number;
@@ -27,6 +30,8 @@ export class RidesService {
   constructor(
     @InjectRepository(Ride)
     private readonly ridesRepository: Repository<Ride>,
+    @Inject(forwardRef(() => EarningsService))
+    private readonly earningsService: EarningsService,
   ) {}
 
   /**
@@ -163,7 +168,8 @@ export class RidesService {
       `Ride ${rideId} completed by driver ${driverId} for ${priceCents} cents`,
     );
 
-    // TODO: Trigger earnings ledger update (will be done in EarningsService integration)
+    // Credit driver's earnings
+    await this.earningsService.creditRide(driverId, rideId, priceCents);
 
     return updated;
   }
