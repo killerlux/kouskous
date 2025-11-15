@@ -11,23 +11,26 @@ import { User } from '../users/user.entity';
 
 export type DepositStatus = 'submitted' | 'approved' | 'rejected';
 
-@Entity({ name: 'deposits' })
+@Entity('deposits')
 export class Deposit {
   @PrimaryGeneratedColumn('uuid')
   id: string;
+
+  @Column('uuid')
+  driver_id: string;
 
   @ManyToOne(() => Driver, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'driver_id' })
   driver: Driver;
 
   @Column({ type: 'bigint' })
-  amount_cents: string;
+  amount_cents: number;
 
-  @Column()
+  @Column({ type: 'text' })
   receipt_url: string;
 
   @Column({
-    type: 'enum',
+    type: 'text',
     enum: ['submitted', 'approved', 'rejected'],
     default: 'submitted',
   })
@@ -36,14 +39,16 @@ export class Deposit {
   @Column({ type: 'text', nullable: true })
   notes?: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
 
   @Column({ type: 'timestamptz', nullable: true })
   decided_at?: Date;
 
+  @Column({ type: 'uuid', nullable: true })
+  decided_by?: string;
+
   @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'decided_by' })
-  decided_by?: User;
+  admin?: User;
 }
-

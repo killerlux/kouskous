@@ -13,23 +13,31 @@ export class DepositsController {
   @Post()
   @ApiOperation({ summary: 'Submit a deposit receipt for approval' })
   async create(@Request() req: any, @Body() body: { amount_cents: number; receipt_url: string }) {
-    // TODO: Get driver ID from req.user
-    return this.depositsService.create(req.user.id, body.amount_cents, body.receipt_url);
+    // Driver submits their own deposit
+    return this.depositsService.submitDeposit(
+      req.user.id,
+      body.amount_cents,
+      body.receipt_url,
+    );
   }
 
   @Post(':id/approve')
   @ApiOperation({ summary: 'Approve a deposit (admin)' })
   async approve(@Param('id') id: string, @Request() req: any) {
-    // TODO: Check admin role
-    await this.depositsService.approve(id, req.user.id);
+    // TODO: Add @Roles('admin') guard
+    await this.depositsService.approveDeposit(id, req.user.id);
     return { ok: true };
   }
 
   @Post(':id/reject')
   @ApiOperation({ summary: 'Reject a deposit (admin)' })
   async reject(@Param('id') id: string, @Request() req: any, @Body() body: { reason?: string }) {
-    // TODO: Check admin role
-    await this.depositsService.reject(id, req.user.id, body.reason);
+    // TODO: Add @Roles('admin') guard
+    await this.depositsService.rejectDeposit(
+      id,
+      req.user.id,
+      body.reason || 'Rejected by admin',
+    );
     return { ok: true };
   }
 }
