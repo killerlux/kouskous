@@ -104,6 +104,10 @@ export const api = {
   exchangeToken: (phone: string, otp: string) =>
     authApi.authExchangeTokenPost({ phone_e164: phone, otp_code: otp }),
 
+  // Admin Login (no OTP required)
+  adminLogin: (phone: string, password: string) =>
+    apiClient.post('/auth/admin/login', { phone_e164: phone, password }),
+
   // User
   getMe: () => usersApi.usersMeGet(),
 

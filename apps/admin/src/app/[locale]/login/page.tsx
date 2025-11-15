@@ -14,46 +14,34 @@ export default function LoginPage() {
   const router = useRouter();
   const { setTokens, setUser } = useAuthStore();
 
-  const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSendOTP = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
     try {
-      // Validate phone format (Tunisia: +216 XX XXX XXX)
-      const phoneRegex = /^\+216\d{8}$/;
+      // Validate phone format (accepts French +33 or Tunisian +216)
+      const phoneRegex = /^\+33\d{9}$|^\+216\d{8}$/;
       if (!phoneRegex.test(phone)) {
-        setError('Numéro de téléphone invalide. Format: +216XXXXXXXX');
+        setError('Numéro de téléphone invalide. Format: +33XXXXXXXXX ou +216XXXXXXXX');
         setIsLoading(false);
         return;
       }
 
-      await api.verifyPhone(phone);
-      setStep('otp');
-    } catch (err) {
-      const error = err as { response?: { data?: { error?: string } } };
-      setError(
-        error.response?.data?.error || 'Erreur lors de l\'envoi du code. Réessayez.'
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      if (!password.trim()) {
+        setError('Veuillez entrer votre mot de passe');
+        setIsLoading(false);
+        return;
+      }
 
-  const handleVerifyOTP = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
-
-    try {
-      const response = await api.exchangeToken(phone, otp);
-      // SDK returns: { access_token, refresh_token, expires_in }
+      // Direct admin login (no OTP)
+      const response = await api.adminLogin(phone, password);
+      // Response: { access_token, refresh_token, expires_in }
       const { access_token, refresh_token } = response.data;
 
       // Store tokens first
@@ -87,7 +75,7 @@ export default function LoginPage() {
     } catch (err) {
       const error = err as { response?: { data?: { error?: string } } };
       setError(
-        error.response?.data?.error || 'Code OTP invalide. Réessayez.'
+        error.response?.data?.error || 'Identifiants invalides. Réessayez.'
       );
     } finally {
       setIsLoading(false);
@@ -102,76 +90,42 @@ export default function LoginPage() {
           subtitle="Plateforme de gestion des taxis"
         />
         <CardContent>
-          {step === 'phone' ? (
-            <form onSubmit={handleSendOTP} className="space-y-4">
-              <Input
-                type="tel"
-                label="Numéro de téléphone"
-                placeholder="+216 XX XXX XXX"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                error={error}
-                leftIcon={<Phone className="w-5 h-5" />}
-                disabled={isLoading}
-                required
-              />
-              <Button
-                type="submit"
-                variant="primary"
-                size="lg"
-                className="w-full"
-                isLoading={isLoading}
-              >
-                Envoyer le code
-              </Button>
-              <p className="text-xs text-gray-500 text-center">
-                Un code de vérification sera envoyé par SMS
-              </p>
-            </form>
-          ) : (
-            <form onSubmit={handleVerifyOTP} className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-600 mb-4">
-                  Code envoyé à <strong>{phone}</strong>
-                </p>
-                <Input
-                  type="text"
-                  label="Code OTP"
-                  placeholder="000000"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  error={error}
-                  leftIcon={<Lock className="w-5 h-5" />}
-                  disabled={isLoading}
-                  maxLength={6}
-                  required
-                />
-              </div>
-              <Button
-                type="submit"
-                variant="primary"
-                size="lg"
-                className="w-full"
-                isLoading={isLoading}
-                disabled={otp.length !== 6}
-              >
-                Vérifier le code
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="w-full"
-                onClick={() => {
-                  setStep('phone');
-                  setOtp('');
-                  setError('');
-                }}
-              >
-                Modifier le numéro
-              </Button>
-            </form>
-          )}
+          <form onSubmit={handleLogin} className="space-y-4">
+            <Input
+              type="tel"
+              label="Numéro de téléphone"
+              placeholder="+33612345678 ou +21612345678"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              error={error}
+              leftIcon={<Phone className="w-5 h-5" />}
+              disabled={isLoading}
+              required
+            />
+            <Input
+              type="password"
+              label="Mot de passe"
+              placeholder="Entrez votre mot de passe"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              error={error}
+              leftIcon={<Lock className="w-5 h-5" />}
+              disabled={isLoading}
+              required
+            />
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              className="w-full"
+              isLoading={isLoading}
+            >
+              Se connecter
+            </Button>
+            <p className="text-xs text-gray-500 text-center">
+              Accès administrateur uniquement
+            </p>
+          </form>
         </CardContent>
       </Card>
     </div>

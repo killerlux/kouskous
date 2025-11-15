@@ -137,5 +137,49 @@ export class AuthService {
     }
     return user;
   }
+
+  /**
+   * Direct admin login (bypasses OTP for admin users)
+   * Uses simple password check for development/admin access
+   */
+  async adminLogin(
+    phone_e164: string,
+    password: string,
+  ): Promise<{ access_token: string; refresh_token: string; expires_in: number }> {
+    // Find user
+    const user = await this.usersService.findByPhone(phone_e164);
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // Check if admin
+    if (user.role !== 'admin') {
+      throw new UnauthorizedException('Admin access required');
+    }
+
+    // Simple password check (in production, use proper password hashing)
+    const adminPassword = this.configService.get<string>('ADMIN_PASSWORD', 'admin123');
+    if (password !== adminPassword) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // Generate JWT tokens
+    const payload: JwtPayload = {
+      sub: user.id,
+      phone_e164: user.phone_e164,
+      role: user.role,
+    };
+
+    const access_token = this.jwtService.sign(payload, { expiresIn: '15m' });
+    const refresh_token = this.jwtService.sign(payload, { expiresIn: '7d' });
+
+    this.logger.log(`Admin login successful for ${phone_e164}`);
+
+    return {
+      access_token,
+      refresh_token,
+      expires_in: 900, // 15 minutes
+    };
+  }
 }
 
