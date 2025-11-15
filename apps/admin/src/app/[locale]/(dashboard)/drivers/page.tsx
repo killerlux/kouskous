@@ -6,7 +6,6 @@ import { Car, Search, Filter } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
 import { Topbar } from '@/components/layout/Topbar';
 
 export default function DriversPage() {
