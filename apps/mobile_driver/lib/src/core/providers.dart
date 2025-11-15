@@ -11,5 +11,12 @@ final socketProvider = Provider.family<SocketClient, SocketNamespace>((ref, ns) 
   final store = ref.read(secureStoreProvider);
   return SocketClient(store, ns);
 });
-final backgroundTrackerProvider = Provider((ref) => BackgroundTracker(ref.read(socketProvider(SocketNamespace.driver))));
+final backgroundTrackerProvider = Provider((ref) {
+  return BackgroundTracker((provider) {
+    if (provider == socketProvider) {
+      return ref.read(socketProvider(SocketNamespace.driver));
+    }
+    return ref.read(provider);
+  });
+});
 
