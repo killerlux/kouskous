@@ -1,15 +1,15 @@
 {
   "name": "@taxi/shared",
-  "version": "1.1.0",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "version": "1.0.0",
+  "description": "Shared types, SDK, and utilities for taxi platform",
+  "main": "index.js",
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch"
+    "generate:types": "openapi-typescript ../../docs/openapi.yaml -o ./sdk/schema.ts",
+    "generate:sdk": "openapi-generator-cli generate -i ../../docs/openapi.yaml -g typescript-axios -o ./sdk/generated --additional-properties=supportsES6=true,withSeparateModelsAndApi=true,apiPackage=api,modelPackage=models",
+    "generate": "pnpm run generate:types && pnpm run generate:sdk",
+    "build": "pnpm run generate"
   },
-  "dependencies": {},
-  "devDependencies": {
-    "typescript": "^5.3.3"
-  }
+  "keywords": [],
+  "author": "",
+  "license": "MIT"
 }
-
