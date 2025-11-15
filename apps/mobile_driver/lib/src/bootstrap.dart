@@ -5,7 +5,11 @@ import 'package:firebase_core/firebase_core.dart';
 
 Future<void> bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: '.env');
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (e) {
+    // .env file might not exist in test environment
+  }
   await Hive.initFlutter();
   await Firebase.initializeApp();
 }
