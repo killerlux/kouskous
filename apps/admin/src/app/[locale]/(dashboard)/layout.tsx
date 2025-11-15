@@ -1,5 +1,9 @@
-// apps/admin/src/app/(dashboard)/layout.tsx
+// apps/admin/src/app/[locale]/(dashboard)/layout.tsx
+'use client';
+
 import { Sidebar } from '@/components/layout/Sidebar';
+import { Topbar } from '@/components/layout/Topbar';
+import { AuthGuard } from '@/components/AuthGuard';
 
 export default function DashboardLayout({
   children,
@@ -7,12 +11,14 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Sidebar />
-      <div className="ml-64">
-        {children}
+    <AuthGuard>
+      <div className="min-h-screen bg-gray-50">
+        <Sidebar />
+        <div className="ml-64">
+          {children}
+        </div>
       </div>
-    </div>
+    </AuthGuard>
   );
 }
 
