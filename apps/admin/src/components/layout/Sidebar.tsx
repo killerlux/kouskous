@@ -10,6 +10,7 @@ import {
   Car,
   Settings,
   LogOut,
+  Navigation,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
@@ -25,6 +26,11 @@ const navItems: NavItem[] = [
     label: 'Tableau de bord',
     href: '/dashboard',
     icon: LayoutDashboard,
+  },
+  {
+    label: 'Courses',
+    href: '/rides',
+    icon: Navigation,
   },
   {
     label: 'Dépôts en attente',

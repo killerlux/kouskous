@@ -4,7 +4,6 @@
 import { Bell, Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui/Input';
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 interface TopbarProps {
   title: string;
@@ -34,8 +33,6 @@ export const Topbar: React.FC<TopbarProps> = ({ title, subtitle }) => {
             />
           </div>
 
-          {/* Language Switcher */}
-          <LanguageSwitcher />
 
           {/* Notifications */}
           <button className="relative p-2 text-gray-600 hover:text-primary hover:bg-gray-100 rounded-lg transition-colors">

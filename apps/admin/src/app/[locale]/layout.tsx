@@ -23,11 +23,8 @@ export default async function LocaleLayout({
 
   const messages = await getMessages();
 
-  // Set RTL for Arabic
-  const direction = locale === 'ar' ? 'rtl' : 'ltr';
-
   return (
-    <html lang={locale} dir={direction}>
+    <html lang={locale} dir="ltr">
       <body>
         <NextIntlClientProvider messages={messages} locale={locale}>
           {children}

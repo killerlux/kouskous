@@ -135,10 +135,8 @@ export default function SettingsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Langue par défaut
                 </label>
-                <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" disabled>
                   <option value="fr">Français</option>
-                  <option value="ar">العربية</option>
-                  <option value="en">English</option>
                 </select>
               </div>
               <div>
