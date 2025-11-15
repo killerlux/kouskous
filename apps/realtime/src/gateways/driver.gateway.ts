@@ -8,7 +8,7 @@ import {
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Inject } from '@nestjs/common';
+import { Inject, forwardRef } from '@nestjs/common';
 import { REDIS } from '../redis/redis.module';
 import { PresenceService } from '../services/presence.service';
 import { GpsValidationService } from '../services/gps-validation.service';
@@ -35,7 +35,7 @@ export class DriverGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @Inject(REDIS) private redis: any,
     private presenceService: PresenceService,
     private gpsValidationService: GpsValidationService,
-    private dispatchService: DispatchService,
+    @Inject(forwardRef(() => DispatchService)) private dispatchService: DispatchService,
   ) {}
 
   async handleConnection(client: Socket) {

@@ -35,8 +35,8 @@ services:
       dockerfile: apps/backend/Dockerfile
     restart: unless-stopped
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/taxi_dev}
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/taxi_dev
+      REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-dev-secret}
       NODE_ENV: development
     ports:
@@ -53,8 +53,9 @@ services:
       dockerfile: apps/realtime/Dockerfile
     restart: unless-stopped
     environment:
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      REDIS_URL: redis://redis:6379
       API_BASE_URL: http://backend:4000
+      NODE_ENV: development
     ports:
       - '4001:4001'
     depends_on:

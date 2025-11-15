@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { REDIS } from '../redis/redis.module';
 import { PresenceService } from './presence.service';
 import { DriverGateway } from '../gateways/driver.gateway';
@@ -18,8 +18,8 @@ export class DispatchService {
   constructor(
     @Inject(REDIS) private redis: any,
     private presenceService: PresenceService,
-    private driverGateway: DriverGateway,
-    private clientGateway: ClientGateway,
+    @Inject(forwardRef(() => DriverGateway)) private driverGateway: DriverGateway,
+    @Inject(forwardRef(() => ClientGateway)) private clientGateway: ClientGateway,
   ) {}
 
   async requestRide(riderUserId: string, request: RideRequest): Promise<string> {

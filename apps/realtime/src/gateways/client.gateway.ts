@@ -7,6 +7,7 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
+import { Inject, forwardRef } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { DispatchService } from '../services/dispatch.service';
 
@@ -24,7 +25,7 @@ export class ClientGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  constructor(private dispatchService: DispatchService) {}
+  constructor(@Inject(forwardRef(() => DispatchService)) private dispatchService: DispatchService) {}
 
   async handleConnection(client: Socket) {
     console.log(`Client connected: ${client.id}`);

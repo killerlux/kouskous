@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { RedisModule } from './redis/redis.module';
 import { DriverGateway } from './gateways/driver.gateway';
@@ -17,12 +17,12 @@ import { GpsValidationService } from './services/gps-validation.service';
     RedisModule,
   ],
   providers: [
+    PresenceService,
+    GpsValidationService,
+    DispatchService,
     DriverGateway,
     ClientGateway,
     AdminGateway,
-    DispatchService,
-    PresenceService,
-    GpsValidationService,
   ],
 })
 export class AppModule {}
