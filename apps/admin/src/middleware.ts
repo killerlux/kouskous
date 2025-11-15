@@ -14,15 +14,22 @@ const intlMiddleware = createMiddleware({
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Handle root path first - redirect to locale-prefixed login
+  // Handle root path - redirect to locale-prefixed login
   if (pathname === '/' || pathname === '') {
     const loginUrl = new URL(`/${defaultLocale}/login`, request.url);
     return NextResponse.redirect(loginUrl);
   }
 
-  // Get auth token from cookies
-  const authStorage = request.cookies.get('auth-storage')?.value;
+  // Let i18n middleware handle locale redirects first
+  const intlResponse = intlMiddleware(request);
 
+  // If i18n middleware redirected, return it immediately
+  if (intlResponse.status === 307 || intlResponse.status === 308) {
+    return intlResponse;
+  }
+
+  // Now check auth (only if i18n didn't redirect)
+  const authStorage = request.cookies.get('auth-storage')?.value;
   let isAuthenticated = false;
   let isAdmin = false;
 
@@ -32,45 +39,32 @@ export function middleware(request: NextRequest) {
       isAuthenticated = parsed.state?.isAuthenticated || false;
       isAdmin = parsed.state?.user?.role === 'admin';
     } catch (e) {
-      // Invalid JSON, not authenticated
+      // Invalid JSON, ignore
     }
   }
 
-  // Extract locale and path without locale
+  // Extract locale and path
   const pathParts = pathname.split('/').filter(Boolean);
-  const locale = pathParts[0] && locales.includes(pathParts[0] as any) ? pathParts[0] : null;
-  const pathnameWithoutLocale = locale ? '/' + pathParts.slice(1).join('/') : pathname;
+  const locale = pathParts[0] && locales.includes(pathParts[0] as any) ? pathParts[0] : defaultLocale;
+  const pathWithoutLocale = pathParts.length > 1 ? '/' + pathParts.slice(1).join('/') : '/';
 
-  // Public routes (without locale prefix)
-  const publicRoutes = ['/login'];
-  const isPublicRoute = publicRoutes.some((route) =>
-    pathnameWithoutLocale === route || pathnameWithoutLocale.startsWith(route + '/')
-  );
+  // Public routes
+  const isLoginPage = pathWithoutLocale === '/login';
 
-  // If authenticated admin trying to access login, redirect to dashboard
-  if (isAuthenticated && isAdmin && pathnameWithoutLocale === '/login') {
-    const currentLocale = locale || defaultLocale;
-    const dashboardUrl = new URL(`/${currentLocale}/dashboard`, request.url);
+  // If authenticated admin on login page, redirect to dashboard
+  if (isAuthenticated && isAdmin && isLoginPage) {
+    const dashboardUrl = new URL(`/${locale}/dashboard`, request.url);
     return NextResponse.redirect(dashboardUrl);
   }
 
-  // Apply i18n middleware (handles locale redirects)
-  const intlResponse = intlMiddleware(request);
-
-  // If i18n middleware already redirected, return it
-  if (intlResponse.status === 307 || intlResponse.status === 308) {
-    return intlResponse;
-  }
-
-  // If not authenticated and trying to access protected route
-  if (!isAuthenticated && !isPublicRoute && pathnameWithoutLocale !== '/') {
-    const currentLocale = locale || defaultLocale;
-    const loginUrl = new URL(`/${currentLocale}/login`, request.url);
+  // If not authenticated and not on login page, redirect to login
+  if (!isAuthenticated && !isLoginPage && pathWithoutLocale !== '/') {
+    const loginUrl = new URL(`/${locale}/login`, request.url);
     return NextResponse.redirect(loginUrl);
   }
 
-  // If authenticated but not admin, deny access
-  if (isAuthenticated && !isAdmin && !isPublicRoute) {
+  // If authenticated but not admin, deny
+  if (isAuthenticated && !isAdmin && !isLoginPage) {
     return NextResponse.json(
       { error: 'Accès refusé. Seuls les administrateurs sont autorisés.' },
       { status: 403 }
@@ -81,6 +75,16 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public files (public folder)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)).*)',
+  ],
 };
 
