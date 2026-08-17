@@ -10,7 +10,7 @@
     "build": "pnpm run generate"
   },
   "dependencies": {
-    "axios": "^1.6.0"
+    "axios": "^1.19.0"
   },
   "keywords": [],
   "author": "",
